@@ -1,19 +1,62 @@
 name: flutter_reader
-description: "A new Flutter project."
+description: "A cross-platform e-book reader supporting EPUB, FB2, and PDF formats"
 publish_to: 'none'
 version: 0.1.0+1
 
 environment:
   sdk: ^3.12.2
+  flutter: '>=3.10.0'
 
 dependencies:
   flutter:
     sdk: flutter
+
+  # State management
+  flutter_bloc: ^9.1.1 # Flutter интеграция для BLoC
+  bloc: ^9.2.1 # Менеждер состояний для Flutter
+  equatable: ^2.0.8 # Сравнение состояний BLoC
+
+  # DI
+  get_it: ^9.2.1
+  injectable: ^3.0.0 # Кодогенерация для get_it (@injectable, @singleton)
+
+  # Navigation
+  go_router: ^17.3.0
+
+  # Database
+  drift: ^2.34.0 # ORM для SQLite в Dart
+  sqlite3_flutter_libs: ^0.6.0+eol # Нативные библиотеки SQLite для Flutter
+  path_provider: ^2.1.6 # Получение путей к директориям на устройстве
+  path: ^1.9.0 # Работа с путями файловой системы
+
+  # Preferences
+  shared_preferences: ^2.5.5 # Сохранение простых данных в виде ключ-значение
+
+  # File picker
+  file_picker: ^11.0.2 # Выбор файлов на устройстве
+
+  # Book Formats
+  epubx: ^4.0.0 # Чтение EPUB файлов
+  xml: ^6.0.1 # Чтение и парсинг XML (для FB2)
+  pdfx: ^2.9.2 # Чтение PDF файлов
+
+  # Utils
+  json_annotation: ^4.12.0 # Аннотации для генерации JSON сериализации
+  rxdart: ^0.28.0 # Реактивные расширения для Dart
+  gap: ^3.0.1 # Простые отступы между виджетами
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+  # Code generation
+  build_runner: ^2.15.0 # Генерация кода для freezed и json_serializable
+  injectable_generator: ^3.1.0 # Генерация кода для get_it
+  drift_dev: ^2.34.1 # Генерация кода для drift
+  json_serializable: ^6.14.0 # Генерация JSON сериализации
+
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/

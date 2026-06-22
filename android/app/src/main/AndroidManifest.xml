@@ -1,8 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Чтение файлов с устройства (file_picker) -->
+    <!-- API 21–32: READ_EXTERNAL_STORAGE -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- API 33+: гранулярные разрешения -->
+    <uses-permission android:name="android.permission.READ_MEDIA_DOCUMENTS" />
+
     <application
-        android:label="flutter_reader"
+        android:label="Reader"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

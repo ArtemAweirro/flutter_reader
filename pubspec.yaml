@@ -33,7 +33,7 @@ dependencies:
   shared_preferences: ^2.5.5 # Сохранение простых данных в виде ключ-значение
 
   # File picker
-  file_picker: ^11.0.2 # Выбор файлов на устройстве
+  file_picker: ^10.3.10 # Выбор файлов на устройстве
 
   # Book Formats
   epubx: ^4.0.0 # Чтение EPUB файлов

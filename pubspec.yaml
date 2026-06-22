@@ -15,6 +15,7 @@ dependencies:
   flutter_bloc: ^9.1.1 # Flutter интеграция для BLoC
   bloc: ^9.2.1 # Менеждер состояний для Flutter
   equatable: ^2.0.8 # Сравнение состояний BLoC
+  dartz: ^0.10.1 # Функциональные типы для обработки ошибок и результатов
 
   # DI
   get_it: ^9.2.1

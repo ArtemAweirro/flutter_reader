@@ -127,7 +127,7 @@ class BookRepositoryImpl implements BookRepository {
   /// Преобразует Book в BooksCompanion для Drift
   BooksCompanion _bookToBooksCompanion(Book book) {
     return BooksCompanion(
-      id: Value(book.id),
+      id: book.id == 0 ? const Value.absent() : Value(book.id),
       title: Value(book.title),
       author: book.author != null ? Value(book.author!) : const Value.absent(),
       filePath: Value(book.filePath),

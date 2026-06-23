@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -131,6 +133,8 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
   final ToggleFavorite toggleFavorite;
   final ToggleRead toggleRead;
 
+  StreamSubscription? _booksSubscription;
+
   BookListBloc({
     required this.getBooks,
     required this.addBook,
@@ -150,6 +154,12 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
     on<_BookListError>(_onError);
   }
 
+  @override
+  Future<void> close() {
+    _booksSubscription?.cancel();
+    return super.close();
+  }
+
   void _onInit(BookListInit event, Emitter<BookListState> emit) {
     emit(state.copyWith(isLoading: true));
     _subscribeToBooks(emit, state.filter);
@@ -161,7 +171,8 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
   }
 
   void _subscribeToBooks(Emitter<BookListState> emit, BookFilter filter) {
-    getBooks(
+    _booksSubscription?.cancel();
+    _booksSubscription = getBooks(
       showFavorites: filter == BookFilter.favorites,
       showRead: filter == BookFilter.read,
     ).listen(

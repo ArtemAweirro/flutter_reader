@@ -147,8 +147,42 @@ class BookPickerService {
 
   /// PDF парсинг
   Future<BookMetadata> _parsePdfMetadata(String filePath) async {
-    // TODO: Реализовать PDF метаданные извлечение
-    return _defaultMetadata(filePath, 'pdf');
+    try {
+      final fileContent = await File(filePath).readAsBytes();
+      final pdfText = String.fromCharCodes(fileContent);
+
+      String? title;
+      String? author;
+
+      // Ищем /Title в документе
+      final titleMatch = RegExp(r'/Title\s*\(\s*([^)]+)\s*\)').firstMatch(pdfText);
+      if (titleMatch != null) {
+        title = _cleanPdfString(titleMatch.group(1) ?? '');
+      }
+
+      // Ищем /Author в документе
+      final authorMatch = RegExp(r'/Author\s*\(\s*([^)]+)\s*\)').firstMatch(pdfText);
+      if (authorMatch != null) {
+        author = _cleanPdfString(authorMatch.group(1) ?? '');
+      }
+
+      return _SimpleBookMetadata(
+        filePath: filePath,
+        format: 'pdf',
+        title: (title?.isNotEmpty ?? false) ? title! : _extractTitleFromPath(filePath),
+        author: (author?.isNotEmpty ?? false) ? author : null,
+      );
+    } catch (e) {
+      return _defaultMetadata(filePath, 'pdf');
+    }
+  }
+
+  /// Очищает строки из PDF от экранирования и управляющих символов
+  String _cleanPdfString(String value) {
+    return value
+        .replaceAll(RegExp(r'\\[()\\]'), '')
+        .replaceAll(RegExp(r'[\x00-\x1f]'), '')
+        .trim();
   }
 
   /// Возвращает метаданные по умолчанию (только имя файла)

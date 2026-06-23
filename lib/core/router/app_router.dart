@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:injectable/injectable.dart';
+import 'package:flutter_reader/features/book_list/presentation/pages/book_list_page.dart';
 
 
 /// Имена маршрутов
@@ -21,7 +22,7 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.bookList,
         name: 'book_list',
-        builder: (context, state) => const _BookListPlaceholder(),
+        builder: (context, state) => const BookListPage(),
       ),
       GoRoute(
         path: AppRoutes.reader,
@@ -41,18 +42,6 @@ class AppRouter {
 // ---------------------------------------------------------------------------
 // Временные заглушки
 // ---------------------------------------------------------------------------
-
-class _BookListPlaceholder extends StatelessWidget {
-  const _BookListPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Мои книги')),
-      body: const Center(child: Text('Список книг — скоро здесь')),
-    );
-  }
-}
 
 class _ReaderPlaceholder extends StatelessWidget {
   final int bookId;

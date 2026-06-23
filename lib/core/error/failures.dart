@@ -5,22 +5,22 @@ sealed class Failure {
 
 /// Ошибка работы с базой данных
 class DatabaseFailure extends Failure {
-  const DatabaseFailure(super.message);
+  const DatabaseFailure() : super('Ошибка базы данных');
 }
 
 /// Ошибка файловой системы (файл не найден, нет доступа)
 class FileFailure extends Failure {
-  const FileFailure(super.message);
+  const FileFailure() : super('Ошибка файловой системы');
 }
 
 /// Ошибка парсинга книги (битый файл, неподдерживаемый формат)
 class ParseFailure extends Failure {
-  const ParseFailure(super.message);
+  const ParseFailure() : super('Ошибка парсинга книги');
 }
 
 /// Пользователь отменил действие (например, закрыл файловый менеджер)
 class CancelledFailure extends Failure {
-  const CancelledFailure() : super('Cancelled by user');
+  const CancelledFailure() : super('Отменено пользователем');
 }
 
 /// Неизвестная ошибка

@@ -2,6 +2,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_reader/core/error/failures.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:epubx/epubx.dart' as epubx;
+import 'package:xml/xml.dart' as xml;
+import 'dart:io';
 
 abstract class BookMetadata {
   final String filePath;
@@ -75,15 +78,71 @@ class BookPickerService {
 
   /// EPUB парсинг (простой вариант)
   Future<BookMetadata> _parseEpubMetadata(String filePath) async {
-    // TODO: Реализовать полный EPUB парсинг с использованием epubx пакета
-    // Пока возвращаем простое имя файла
-    return _defaultMetadata(filePath, 'epub');
+    final book = await epubx.EpubReader.readBook(
+      await _readFileAsBytes(filePath),
+    );
+
+    final title = book.Title?.isEmpty ?? true ? null : book.Title;
+    final author = book.Author?.isEmpty ?? true ? null : book.Author;
+
+    return _SimpleBookMetadata(
+      filePath: filePath,
+      format: 'epub',
+      title: title ?? _extractTitleFromPath(filePath),
+      author: author
+    );
   }
 
   /// FB2 парсинг
   Future<BookMetadata> _parseFb2Metadata(String filePath) async {
-    // TODO: Реализовать FB2 парсинг (XML)
-    return _defaultMetadata(filePath, 'fb2');
+    final content = await File(filePath).readAsString();
+    final document = xml.XmlDocument.parse(content);
+
+    String? title;
+    String? author;
+
+    final titleInfo = document.descendants
+        .whereType<xml.XmlElement>()
+        .where((e) => e.localName == 'title-info')
+        .firstOrNull;
+
+    if (titleInfo != null) {
+      title = titleInfo.descendants
+          .whereType<xml.XmlElement>()
+          .where((e) => e.localName == 'book-title')
+          .firstOrNull
+          ?.innerText;
+
+      final authorElement = titleInfo.descendants
+          .whereType<xml.XmlElement>()
+          .where((e) => e.localName == 'author')
+          .firstOrNull;
+
+      if (authorElement != null) {
+        final firstName = authorElement.descendants
+            .whereType<xml.XmlElement>()
+            .where((e) => e.localName == 'first-name')
+            .firstOrNull
+            ?.innerText;
+
+        final lastName = authorElement.descendants
+            .whereType<xml.XmlElement>()
+            .where((e) => e.localName == 'last-name')
+            .firstOrNull
+            ?.innerText;
+
+        if (firstName != null || lastName != null) {
+          author = [firstName, lastName].whereType<String>().join(' ').trim();
+        }
+      }
+    }
+
+    return _SimpleBookMetadata(
+      filePath: filePath,
+      format: 'fb2',
+      title: (title?.isNotEmpty ?? false) ? title! : _extractTitleFromPath(filePath),
+      author: (author?.isNotEmpty ?? false) ? author : null,
+    );
   }
 
   /// PDF парсинг
@@ -104,6 +163,15 @@ class BookPickerService {
       title: title.isEmpty ? 'Unknown' : title,
       author: null,
     );
+  }
+
+  Future<List<int>> _readFileAsBytes(String filePath) async {
+    return await File(filePath).readAsBytes();
+  }
+
+  String _extractTitleFromPath(String filePath) {
+    final fileName = filePath.split('/').last;
+    return fileName.replaceAll(RegExp(r'\.(epub|fb2|pdf)$'), '');
   }
 }
 

@@ -72,8 +72,10 @@ class Comments extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
  
+  @override
   int get schemaVersion => 1;
  
+  @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();

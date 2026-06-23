@@ -6,22 +6,26 @@ import 'package:flutter_reader/features/book_list/presentation/bloc/book_list_bl
 
 class BookCard extends StatelessWidget {
   final Book book;
+  final VoidCallback? onTap;
 
   const BookCard({
     super.key,
     required this.book,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
@@ -135,6 +139,7 @@ class BookCard extends StatelessWidget {
           ],
         ),
       ),
+    )
     );
   }
 }

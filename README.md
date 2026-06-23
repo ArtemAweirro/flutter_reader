@@ -6,7 +6,7 @@
 
 - Flutter ≥ 3.10.0
 - Dart ≥ 3.0.0
-- Android API 21+ / iOS 8+
+- Android API 24+ / iOS 13+
 
 ## Технологии
 

@@ -8,11 +8,13 @@ import '../bloc/reader_bloc.dart';
 class ReaderTopBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBookmarksPressed;
   final VoidCallback onSettingsPressed;
+  final VoidCallback onSearchPressed;
 
   const ReaderTopBar({
     super.key,
     required this.onBookmarksPressed,
     required this.onSettingsPressed,
+    required this.onSearchPressed,
   });
 
   @override
@@ -45,6 +47,11 @@ class ReaderTopBar extends StatelessWidget implements PreferredSizeWidget {
             ],
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: onSearchPressed,
+              tooltip: 'Поиск',
+            ),
             IconButton(
               icon: const Icon(Icons.bookmark_outline),
               onPressed: onBookmarksPressed,

@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
+import '../../../settings/presentation/widgets/reader_settings_sheet.dart';
+import '../../../settings/presentation/widgets/reader_search_sheet.dart';
 import '../bloc/reader_bloc.dart';
 import '../widgets/bookmarks_list.dart';
 import '../widgets/reader_bars.dart';
@@ -98,6 +100,7 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
                   ? ReaderTopBar(
                       onBookmarksPressed: () => BookmarksList.show(context),
                       onSettingsPressed: () => _showSettings(context),
+                      onSearchPressed: () => ReaderSearchSheet.show(context),
                     )
                   : null,
               body: _buildBody(context, state),
@@ -135,11 +138,15 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
           child: BlocBuilder<SettingsBloc, SettingsState>(
             buildWhen: (prev, curr) =>
                 prev.fontSize != curr.fontSize ||
-                prev.scrollDirection != curr.scrollDirection,
+                prev.scrollDirection != curr.scrollDirection ||
+                prev.brightness != curr.brightness ||
+                prev.contrast != curr.contrast,
             builder: (context, settings) {
               return ReaderContent(
                 fontSize: settings.fontSize,
                 scrollDirection: settings.scrollDirection,
+                brightness: settings.brightness,
+                contrast: settings.contrast,
               );
             },
           ),
@@ -148,9 +155,6 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
   }
 
   void _showSettings(BuildContext context) {
-    // Реализуется на Этапе 3 (меню читалки)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Настройки — Этап 3')),
-    );
+    ReaderSettingsSheet.show(context);
   }
 }

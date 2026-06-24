@@ -11,6 +11,43 @@ import '../widgets/bookmarks_list.dart';
 import '../widgets/reader_bars.dart';
 import '../widgets/reader_content.dart';
 
+/// Ловит сырые pointer events, не участвуя в gesture arena Flutter.
+/// Позволяет надёжно различать тап (down→up без move) и скролл (down→move).
+class _PointerDetector extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final VoidCallback onScroll;
+
+  const _PointerDetector({
+    required this.child,
+    required this.onTap,
+    required this.onScroll,
+  });
+
+  @override
+  State<_PointerDetector> createState() => _PointerDetectorState();
+}
+
+class _PointerDetectorState extends State<_PointerDetector> {
+  bool _wasMoved = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => _wasMoved = false,
+      onPointerMove: (_) => _wasMoved = true,
+      onPointerUp: (_) {
+        if (_wasMoved) {
+          widget.onScroll();
+        } else {
+          widget.onTap();
+        }
+      },
+      child: widget.child,
+    );
+  }
+}
+
 class ReaderPage extends StatelessWidget {
   final int bookId;
   final String filePath;
@@ -68,13 +105,17 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
         .add(const ReaderPositionSaveRequested());
   }
 
+  void _hideBars() {
+    setState(() => _barsVisible = false);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
   void _toggleBars() {
-    setState(() => _barsVisible = !_barsVisible);
-    // Скрываем системные бары для иммерсивного чтения
     if (_barsVisible) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      _hideBars();
     } else {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      setState(() => _barsVisible = true);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
   }
 
@@ -96,16 +137,29 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
         child: BlocBuilder<ReaderBloc, ReaderState>(
           builder: (context, state) {
             return Scaffold(
-              appBar: _barsVisible
-                  ? ReaderTopBar(
-                      onBookmarksPressed: () => BookmarksList.show(context),
-                      onSettingsPressed: () => _showSettings(context),
-                      onSearchPressed: () => ReaderSearchSheet.show(context),
-                    )
-                  : null,
-              body: _buildBody(context, state),
-              bottomNavigationBar:
-                  _barsVisible ? const ReaderBottomBar() : null,
+              body: Stack(
+                children: [
+                  _buildBody(context, state),
+                  if (_barsVisible)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: ReaderTopBar(
+                        onBookmarksPressed: () => BookmarksList.show(context),
+                        onSettingsPressed: () => _showSettings(context),
+                        onSearchPressed: () => ReaderSearchSheet.show(context),
+                      ),
+                    ),
+                  if (_barsVisible)
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: const ReaderBottomBar(),
+                    ),
+                ],
+              ),
             );
           },
         ),
@@ -133,8 +187,11 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
             ],
           ),
         ),
-      ReaderStatus.success => GestureDetector(
+      ReaderStatus.success => _PointerDetector(
           onTap: _toggleBars,
+          onScroll: () {
+            if (_barsVisible) _hideBars();
+          },
           child: BlocBuilder<SettingsBloc, SettingsState>(
             buildWhen: (prev, curr) =>
                 prev.fontSize != curr.fontSize ||

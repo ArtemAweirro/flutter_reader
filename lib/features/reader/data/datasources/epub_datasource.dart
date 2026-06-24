@@ -18,12 +18,16 @@ class EpubDataSource {
     final author = epubBook.Author;
  
     final chapters = _extractChapters(epubBook);
+
+    // Вертикальный режим: склеиваем все главы в один текст
+    final fullText = chapters.map((c) => c.content).join('\n\n\n');
  
     return ReaderBookEntity(
       bookId: bookId,
       title: title,
       author: author,
       chapters: chapters,
+      fullText: fullText,
     );
   }
  

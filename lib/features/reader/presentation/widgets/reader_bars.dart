@@ -86,17 +86,17 @@ class ReaderBottomBar extends StatelessWidget {
         final totalChapters = state.book?.totalChapters ?? 0;
         final currentIndex = state.position.chapterIndex;
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant,
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
               ),
             ),
-          ),
-          child: SafeArea(
             child: Row(
               children: [
                 IconButton(

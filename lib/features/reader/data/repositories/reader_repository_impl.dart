@@ -6,18 +6,23 @@ import '../../domain/entities/bookmark.dart';
 import '../../domain/repositories/reader_repository.dart';
 import '../datasources/epub_datasource.dart';
 import '../datasources/reader_local_datasource.dart';
+import '../datasources/fb2_datasource.dart';
 import '../mappers/bookmark_mapper.dart';
 
 @Injectable(as: ReaderRepository)
 class ReaderRepositoryImpl implements ReaderRepository {
   final EpubDataSource _epubDataSource;
+  final Fb2DataSource _fb2dataSource;
   final ReaderLocalDataSource _localDataSource;
 
-  ReaderRepositoryImpl(this._epubDataSource, this._localDataSource);
+  ReaderRepositoryImpl(this._epubDataSource, this._fb2dataSource, this._localDataSource);
 
   @override
   Future<ReaderBookEntity> openBook(int bookId, String filePath) {
     // В будущем здесь будет switch по формату (epub/fb2/pdf)
+    if (filePath.endsWith('.fb2')) {
+      return _fb2dataSource.openFb2(bookId, filePath);
+    }
     return _epubDataSource.openEpub(bookId, filePath);
   }
 

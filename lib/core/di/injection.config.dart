@@ -29,6 +29,7 @@ import '../../features/book_list/domain/usecases/toggle_read.dart' as _i1040;
 import '../../features/book_list/presentation/bloc/book_list_bloc.dart'
     as _i897;
 import '../../features/reader/data/datasources/epub_datasource.dart' as _i113;
+import '../../features/reader/data/datasources/fb2_datasource.dart' as _i610;
 import '../../features/reader/data/datasources/reader_local_datasource.dart'
     as _i847;
 import '../../features/reader/data/repositories/reader_repository_impl.dart'
@@ -57,6 +58,7 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     gh.factory<_i265.BookPickerService>(() => _i265.BookPickerService());
     gh.factory<_i113.EpubDataSource>(() => _i113.EpubDataSource());
+    gh.factory<_i610.Fb2DataSource>(() => _i610.Fb2DataSource());
     gh.singleton<_i982.AppDatabase>(() => _i982.AppDatabase());
     gh.singleton<_i81.AppRouter>(() => _i81.AppRouter());
     gh.factory<_i864.BooksDao>(() => _i864.BooksDao(gh<_i982.AppDatabase>()));
@@ -81,12 +83,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1016.ReaderDao>(),
       ),
     );
-    gh.factory<_i820.ReaderRepository>(
-      () => _i788.ReaderRepositoryImpl(
-        gh<_i113.EpubDataSource>(),
-        gh<_i847.ReaderLocalDataSource>(),
-      ),
-    );
     gh.factory<_i155.AddBook>(() => _i155.AddBook(gh<_i689.BookRepository>()));
     gh.factory<_i90.DeleteBook>(
       () => _i90.DeleteBook(gh<_i689.BookRepository>()),
@@ -99,6 +95,13 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i1040.ToggleRead>(
       () => _i1040.ToggleRead(gh<_i689.BookRepository>()),
+    );
+    gh.factory<_i820.ReaderRepository>(
+      () => _i788.ReaderRepositoryImpl(
+        gh<_i113.EpubDataSource>(),
+        gh<_i610.Fb2DataSource>(),
+        gh<_i847.ReaderLocalDataSource>(),
+      ),
     );
     gh.factory<_i1007.AddBookmarkUseCase>(
       () => _i1007.AddBookmarkUseCase(gh<_i820.ReaderRepository>()),

@@ -46,13 +46,22 @@ final class ReaderChapterChanged extends ReaderEvent {
   List<Object?> get props => [chapterIndex];
 }
 
-/// Обновить позицию скролла (вызывается при прокрутке)
+/// Обновить позицию скролла в горизонтальном режиме (offset внутри главы)
 final class ReaderScrolled extends ReaderEvent {
   final double scrollOffset;
   const ReaderScrolled(this.scrollOffset);
-
+ 
   @override
   List<Object?> get props => [scrollOffset];
+}
+
+/// Обновить позицию скролла в вертикальном режиме (offset по всему тексту)
+final class ReaderVerticalScrolled extends ReaderEvent {
+  final double verticalOffset;
+  const ReaderVerticalScrolled(this.verticalOffset);
+ 
+  @override
+  List<Object?> get props => [verticalOffset];
 }
 
 /// Сохранить текущую позицию (при уходе с экрана)
@@ -112,7 +121,7 @@ final class ReaderState extends Equatable {
   const ReaderState({
     this.status = ReaderStatus.initial,
     this.book,
-    this.position = const ReadingPosition(chapterIndex: 0),
+    this.position = const ReadingPosition(),
     this.bookmarks = const [],
     this.errorMessage,
   });
@@ -177,6 +186,7 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     on<ReaderOpened>(_onOpened);
     on<ReaderChapterChanged>(_onChapterChanged);
     on<ReaderScrolled>(_onScrolled);
+    on<ReaderVerticalScrolled>(_onVerticalScrolled);
     on<ReaderPositionSaveRequested>(_onPositionSaveRequested);
     on<ReaderBookmarkAdded>(_onBookmarkAdded);
     on<ReaderBookmarkDeleted>(_onBookmarkDeleted);
@@ -226,11 +236,20 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
   }
 
   void _onScrolled(ReaderScrolled event, Emitter<ReaderState> emit) {
-    // Обновляем offset без emit в БД — сохраняем только при уходе с экрана
+    // Горизонтальный режим — обновляем offset внутри текущей главы
     emit(state.copyWith(
-      position: ReadingPosition(
-        chapterIndex: state.position.chapterIndex,
+      position: state.position.copyWith(
         scrollOffset: event.scrollOffset,
+      ),
+    ));
+  }
+
+  void _onVerticalScrolled(
+      ReaderVerticalScrolled event, Emitter<ReaderState> emit) {
+    // Вертикальный режим — обновляем offset по всему тексту
+    emit(state.copyWith(
+      position: state.position.copyWith(
+        verticalOffset: event.verticalOffset,
       ),
     ));
   }

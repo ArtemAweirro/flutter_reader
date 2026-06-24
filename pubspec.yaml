@@ -39,7 +39,7 @@ dependencies:
   # Book Formats
   epubx: ^4.0.0 # Чтение EPUB файлов
   xml: ^6.0.1 # Чтение и парсинг XML (для FB2)
-  pdfx: ^2.9.2 # Чтение PDF файлов
+  syncfusion_flutter_pdf: ^33.2.13 # Работа с PDF файлами
 
   # UI
   screen_brightness: ^2.1.11 # Управление яркостью экрана

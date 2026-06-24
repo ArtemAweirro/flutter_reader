@@ -30,8 +30,11 @@ import '../../features/book_list/presentation/bloc/book_list_bloc.dart'
     as _i897;
 import '../../features/reader/data/datasources/epub_datasource.dart' as _i113;
 import '../../features/reader/data/datasources/fb2_datasource.dart' as _i610;
+import '../../features/reader/data/datasources/pdf_datasource.dart' as _i737;
 import '../../features/reader/data/datasources/reader_local_datasource.dart'
     as _i847;
+import '../../features/reader/data/repositories/book_format_detector.dart'
+    as _i660;
 import '../../features/reader/data/repositories/reader_repository_impl.dart'
     as _i788;
 import '../../features/reader/domain/repositories/reader_repository.dart'
@@ -59,6 +62,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i265.BookPickerService>(() => _i265.BookPickerService());
     gh.factory<_i113.EpubDataSource>(() => _i113.EpubDataSource());
     gh.factory<_i610.Fb2DataSource>(() => _i610.Fb2DataSource());
+    gh.factory<_i737.PdfDataSource>(() => _i737.PdfDataSource());
+    gh.factory<_i660.BookFormatDetector>(() => _i660.BookFormatDetector());
     gh.singleton<_i982.AppDatabase>(() => _i982.AppDatabase());
     gh.singleton<_i81.AppRouter>(() => _i81.AppRouter());
     gh.factory<_i864.BooksDao>(() => _i864.BooksDao(gh<_i982.AppDatabase>()));
@@ -100,7 +105,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i788.ReaderRepositoryImpl(
         gh<_i113.EpubDataSource>(),
         gh<_i610.Fb2DataSource>(),
+        gh<_i737.PdfDataSource>(),
         gh<_i847.ReaderLocalDataSource>(),
+        gh<_i660.BookFormatDetector>(),
       ),
     );
     gh.factory<_i1007.AddBookmarkUseCase>(

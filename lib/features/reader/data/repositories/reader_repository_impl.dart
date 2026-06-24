@@ -1,3 +1,4 @@
+import 'package:flutter_reader/features/reader/data/datasources/pdf_datasource.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../domain/entities/reader_book.dart';
@@ -8,22 +9,43 @@ import '../datasources/epub_datasource.dart';
 import '../datasources/reader_local_datasource.dart';
 import '../datasources/fb2_datasource.dart';
 import '../mappers/bookmark_mapper.dart';
+import 'book_format_detector.dart';
 
 @Injectable(as: ReaderRepository)
 class ReaderRepositoryImpl implements ReaderRepository {
   final EpubDataSource _epubDataSource;
-  final Fb2DataSource _fb2dataSource;
+  final Fb2DataSource _fb2DataSource;
+  final PdfDataSource _pdfDataSource;
   final ReaderLocalDataSource _localDataSource;
+  final BookFormatDetector _formatDetector;
 
-  ReaderRepositoryImpl(this._epubDataSource, this._fb2dataSource, this._localDataSource);
+  ReaderRepositoryImpl(
+    this._epubDataSource,
+    this._fb2DataSource,
+    this._pdfDataSource,
+    this._localDataSource,
+    this._formatDetector,
+  );
 
   @override
-  Future<ReaderBookEntity> openBook(int bookId, String filePath) {
-    // В будущем здесь будет switch по формату (epub/fb2/pdf)
-    if (filePath.endsWith('.fb2')) {
-      return _fb2dataSource.openFb2(bookId, filePath);
+  Future<ReaderBookEntity> openBook(int bookId, String filePath) async {
+    final format = _formatDetector.detect(filePath);
+    switch (format) {
+      case BookFormat.epub:
+        return _epubDataSource.openEpub(bookId, filePath);
+
+      case BookFormat.fb2:
+        return _fb2DataSource.openFb2(bookId, filePath);
+
+      case BookFormat.pdf:
+        return _pdfDataSource.openPdf(
+          bookId: bookId,
+          filePath: filePath,
+        );
+
+      case BookFormat.unknown:
+        throw UnsupportedError('Unsupported book format: $filePath');
     }
-    return _epubDataSource.openEpub(bookId, filePath);
   }
 
   @override

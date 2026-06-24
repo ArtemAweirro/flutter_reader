@@ -10,10 +10,12 @@ class ReaderBookEntity extends Equatable {
   final String title;
   final String? author;
 
-  /// Список глав в порядке чтения
+  /// Главы — используются в горизонтальном режиме (страница = глава)
   final List<ChapterEntity> chapters;
 
-  /// Общее количество глав
+  /// Весь текст книги одной строкой — используется в вертикальном режиме
+  final String fullText;
+
   int get totalChapters => chapters.length;
 
   const ReaderBookEntity({
@@ -21,8 +23,9 @@ class ReaderBookEntity extends Equatable {
     required this.title,
     this.author,
     required this.chapters,
+    required this.fullText,
   });
 
   @override
-  List<Object?> get props => [bookId, title, author, chapters];
+  List<Object?> get props => [bookId, title, author, chapters, fullText];
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:screen_brightness/screen_brightness.dart';
 
 abstract class _PrefKeys {
   static const fontSize = 'reader_font_size';
@@ -137,6 +138,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
   Future<void> _onBrightness(
       BrightnessChanged event, Emitter<SettingsState> emit) async {
+    await ScreenBrightness().setApplicationScreenBrightness(event.value);
     await _prefs.setDouble(_PrefKeys.brightness, event.value);
     emit(state.copyWith(brightness: event.value));
   }

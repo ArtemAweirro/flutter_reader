@@ -27,5 +27,5 @@ class ReaderBookEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [bookId, title, author, chapters, fullText];
+  List<Object?> get props => [bookId, title, author];
 }

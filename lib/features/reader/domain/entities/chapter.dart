@@ -19,5 +19,5 @@ class ChapterEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [index, title, content];
+  List<Object?> get props => [index, title];
 }

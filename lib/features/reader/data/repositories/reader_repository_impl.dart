@@ -38,10 +38,7 @@ class ReaderRepositoryImpl implements ReaderRepository {
         return _fb2DataSource.openFb2(bookId, filePath);
 
       case BookFormat.pdf:
-        return _pdfDataSource.openPdf(
-          bookId: bookId,
-          filePath: filePath,
-        );
+        return _pdfDataSource.openPdf(bookId, filePath);
 
       case BookFormat.unknown:
         throw UnsupportedError('Unsupported book format: $filePath');

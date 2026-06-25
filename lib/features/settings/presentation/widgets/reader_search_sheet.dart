@@ -209,9 +209,10 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet>
                     context,
                   ),
                   onTap: () {
-                    context
-                        .read<ReaderBloc>()
-                        .add(ReaderChapterChanged(result.chapterIndex));
+                    context.read<ReaderBloc>().add(ReaderSearchResultJumped(
+                          chapterIndex: result.chapterIndex,
+                          query: _searchController.text.trim(),
+                        ));
                     Navigator.pop(context);
                   },
                 );

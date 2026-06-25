@@ -1,78 +1,91 @@
 import 'dart:io';
 
 import 'package:injectable/injectable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 import '../../domain/entities/reader_book.dart';
 import '../../domain/entities/chapter.dart';
 
+class _PdfParseParams {
+  final int bookId;
+  final String filePath;
+
+  const _PdfParseParams({required this.bookId, required this.filePath});
+}
+
 @injectable
 class PdfDataSource {
-  Future<ReaderBookEntity> openPdf({
-    required int bookId,
-    required String filePath,
-  }) async {
-    final bytes = await File(filePath).readAsBytes();
-    final document = PdfDocument(inputBytes: bytes);
-
-    final title = document.documentInformation.title;
-    final author = document.documentInformation.author;
-
-    final chapters = _extractChapters(document);
-
-    final fullText = chapters.map((e) => e.content).join('\n\n\n');
-
-    document.dispose();
-
-    return ReaderBookEntity(
-      bookId: bookId,
-      title: title,
-      author: author,
-      chapters: chapters,
-      fullText: fullText,
+  Future<ReaderBookEntity> openPdf(int bookId, String filePath) async {
+    // Весь парсинг — в отдельном isolate, UI не блокируется
+    return compute(
+      _parsePdfInIsolate,
+      _PdfParseParams(bookId: bookId, filePath: filePath),
     );
   }
+}
 
-  List<ChapterEntity> _extractChapters(PdfDocument doc) {
-    final chapters = <ChapterEntity>[];
+Future<ReaderBookEntity> _parsePdfInIsolate(_PdfParseParams params) async {
+  final bytes = await File(params.filePath).readAsBytes();
+  final document = PdfDocument(inputBytes: bytes);
 
-    const pagesPerChapter = 5;
-    int index = 0;
+  final title = document.documentInformation.title;
+  final author = document.documentInformation.author;
 
-    final extractor = PdfTextExtractor(doc);
+  final chapters = _extractChapters(document);
 
-    for (int i = 0; i < doc.pages.count; i += pagesPerChapter) {
-      final end = (i + pagesPerChapter > doc.pages.count)
-          ? doc.pages.count
-          : i + pagesPerChapter;
+  final fullText = chapters.map((e) => e.content).join('\n\n\n');
 
-      final buffer = StringBuffer();
+  document.dispose();
 
-      for (int p = i; p < end; p++) {
-        final text = extractor.extractText(startPageIndex: p, endPageIndex: p);
+  return ReaderBookEntity(
+    bookId: params.bookId,
+    title: title,
+    author: author,
+    chapters: chapters,
+    fullText: fullText,
+  );
+}
 
-        final cleaned = _normalizePdfText(text);
+List<ChapterEntity> _extractChapters(PdfDocument doc) {
+  final chapters = <ChapterEntity>[];
 
-        if (cleaned.isNotEmpty) {
-          buffer.writeln(cleaned);
-        }
-      }
+  const pagesPerChapter = 5;
+  int index = 0;
 
-      final content = buffer.toString().trim();
+  final extractor = PdfTextExtractor(doc);
 
-      if (content.isNotEmpty) {
-        chapters.add(
-          ChapterEntity(
-            index: index++,
-            title: 'Стр. ${i + 1}–$end',
-            content: content,
-          ),
-        );
+  for (int i = 0; i < doc.pages.count; i += pagesPerChapter) {
+    final end = (i + pagesPerChapter > doc.pages.count)
+        ? doc.pages.count
+        : i + pagesPerChapter;
+
+    final buffer = StringBuffer();
+
+    for (int p = i; p < end; p++) {
+      final text = extractor.extractText(startPageIndex: p, endPageIndex: p);
+
+      final cleaned = _normalizePdfText(text);
+
+      if (cleaned.isNotEmpty) {
+        buffer.writeln(cleaned);
       }
     }
 
-    return chapters;
+    final content = buffer.toString().trim();
+
+    if (content.isNotEmpty) {
+      chapters.add(
+        ChapterEntity(
+          index: index++,
+          title: 'Стр. ${i + 1}–$end',
+          content: content,
+        ),
+      );
+    }
   }
+
+  return chapters;
 }
 
 String _normalizePdfText(String text) {
@@ -115,9 +128,7 @@ String _fixLineBreaks(String text) {
         line.endsWith('—') ||
         line.endsWith(':');
 
-    final shouldJoin =
-        !endsWithSentenceBreak &&
-        next.isNotEmpty;
+    final shouldJoin = !endsWithSentenceBreak && next.isNotEmpty;
 
     if (shouldJoin) {
       buffer.write('$line ');

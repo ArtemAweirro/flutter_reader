@@ -15,7 +15,6 @@ import '../../domain/usecases/open_book.dart';
 import '../../domain/usecases/save_position.dart';
 import '../../domain/usecases/watch_bookmarks.dart';
 
-
 // ---------------------------------------------------------------------------
 // Events
 // ---------------------------------------------------------------------------
@@ -50,7 +49,7 @@ final class ReaderChapterChanged extends ReaderEvent {
 final class ReaderScrolled extends ReaderEvent {
   final double scrollOffset;
   const ReaderScrolled(this.scrollOffset);
- 
+
   @override
   List<Object?> get props => [scrollOffset];
 }
@@ -59,7 +58,7 @@ final class ReaderScrolled extends ReaderEvent {
 final class ReaderVerticalScrolled extends ReaderEvent {
   final double verticalOffset;
   const ReaderVerticalScrolled(this.verticalOffset);
- 
+
   @override
   List<Object?> get props => [verticalOffset];
 }
@@ -96,6 +95,25 @@ final class ReaderBookmarkJumped extends ReaderEvent {
   List<Object?> get props => [bookmark];
 }
 
+/// Перейти к результату поиска и подсветить найденный текст
+final class ReaderSearchResultJumped extends ReaderEvent {
+  final int chapterIndex;
+  final String query;
+
+  const ReaderSearchResultJumped({
+    required this.chapterIndex,
+    required this.query,
+  });
+
+  @override
+  List<Object?> get props => [chapterIndex, query];
+}
+
+/// Сбросить подсветку поиска
+final class ReaderHighlightCleared extends ReaderEvent {
+  const ReaderHighlightCleared();
+}
+
 // Внутренние события
 final class _BookmarksUpdated extends ReaderEvent {
   final List<BookmarkEntity> bookmarks;
@@ -118,12 +136,17 @@ final class ReaderState extends Equatable {
   final List<BookmarkEntity> bookmarks;
   final String? errorMessage;
 
+  /// Текст для подсветки после перехода из поиска.
+  /// null — подсветки нет.
+  final String? highlightQuery;
+
   const ReaderState({
     this.status = ReaderStatus.initial,
     this.book,
     this.position = const ReadingPosition(),
     this.bookmarks = const [],
     this.errorMessage,
+    this.highlightQuery,
   });
 
   /// Текущая глава
@@ -145,6 +168,8 @@ final class ReaderState extends Equatable {
     ReadingPosition? position,
     List<BookmarkEntity>? bookmarks,
     String? errorMessage,
+    String? highlightQuery,
+    bool clearHighlight = false,
   }) {
     return ReaderState(
       status: status ?? this.status,
@@ -152,12 +177,21 @@ final class ReaderState extends Equatable {
       position: position ?? this.position,
       bookmarks: bookmarks ?? this.bookmarks,
       errorMessage: errorMessage,
+      highlightQuery: clearHighlight
+          ? null
+          : (highlightQuery ?? this.highlightQuery),
     );
   }
 
   @override
-  List<Object?> get props =>
-      [status, book, position, bookmarks, errorMessage];
+  List<Object?> get props => [
+    status,
+    book?.bookId,
+    position,
+    bookmarks,
+    errorMessage,
+    highlightQuery,
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +216,7 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     required this.watchBookmarks,
     required this.addBookmark,
     required this.deleteBookmark,
-  })  : super(const ReaderState()) {
+  }) : super(const ReaderState()) {
     on<ReaderOpened>(_onOpened);
     on<ReaderChapterChanged>(_onChapterChanged);
     on<ReaderScrolled>(_onScrolled);
@@ -191,13 +225,14 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     on<ReaderBookmarkAdded>(_onBookmarkAdded);
     on<ReaderBookmarkDeleted>(_onBookmarkDeleted);
     on<ReaderBookmarkJumped>(_onBookmarkJumped);
+    on<ReaderSearchResultJumped>(_onSearchResultJumped);
+    on<ReaderHighlightCleared>(_onHighlightCleared);
     on<_BookmarksUpdated>(_onBookmarksUpdated);
   }
 
   // --- Handlers ---
 
-  Future<void> _onOpened(
-      ReaderOpened event, Emitter<ReaderState> emit) async {
+  Future<void> _onOpened(ReaderOpened event, Emitter<ReaderState> emit) async {
     emit(state.copyWith(status: ReaderStatus.loading));
     try {
       // Загружаем книгу и сохранённую позицию параллельно
@@ -211,58 +246,75 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
 
       // Подписываемся на закладки
       _bookmarksSubscription?.cancel();
-      _bookmarksSubscription = watchBookmarks(event.bookId).listen(
-        (bookmarks) => add(_BookmarksUpdated(bookmarks)),
-      );
+      _bookmarksSubscription = watchBookmarks(
+        event.bookId,
+      ).listen((bookmarks) => add(_BookmarksUpdated(bookmarks)));
 
-      emit(state.copyWith(
-        status: ReaderStatus.success,
-        book: book,
-        position: position,
-      ));
+      emit(
+        state.copyWith(
+          status: ReaderStatus.success,
+          book: book,
+          position: position,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        status: ReaderStatus.failure,
-        errorMessage: 'Не удалось открыть книгу: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: ReaderStatus.failure,
+          errorMessage: 'Не удалось открыть книгу: $e',
+        ),
+      );
     }
   }
 
   void _onChapterChanged(
-      ReaderChapterChanged event, Emitter<ReaderState> emit) {
-    emit(state.copyWith(
-      position: ReadingPosition(chapterIndex: event.chapterIndex),
-    ));
+    ReaderChapterChanged event,
+    Emitter<ReaderState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        position: state.position.copyWith(
+          chapterIndex: event.chapterIndex,
+          scrollOffset: 0.0,
+        ),
+      ),
+    );
   }
 
   void _onScrolled(ReaderScrolled event, Emitter<ReaderState> emit) {
     // Горизонтальный режим — обновляем offset внутри текущей главы
-    emit(state.copyWith(
-      position: state.position.copyWith(
-        scrollOffset: event.scrollOffset,
+    emit(
+      state.copyWith(
+        position: state.position.copyWith(scrollOffset: event.scrollOffset),
       ),
-    ));
+    );
   }
 
   void _onVerticalScrolled(
-      ReaderVerticalScrolled event, Emitter<ReaderState> emit) {
+    ReaderVerticalScrolled event,
+    Emitter<ReaderState> emit,
+  ) {
     // Вертикальный режим — обновляем offset по всему тексту
-    emit(state.copyWith(
-      position: state.position.copyWith(
-        verticalOffset: event.verticalOffset,
+    emit(
+      state.copyWith(
+        position: state.position.copyWith(verticalOffset: event.verticalOffset),
       ),
-    ));
+    );
   }
 
   Future<void> _onPositionSaveRequested(
-      ReaderPositionSaveRequested event, Emitter<ReaderState> emit) async {
+    ReaderPositionSaveRequested event,
+    Emitter<ReaderState> emit,
+  ) async {
     final bookId = state.book?.bookId;
     if (bookId == null) return;
     await savePosition(bookId, state.position);
   }
 
   Future<void> _onBookmarkAdded(
-      ReaderBookmarkAdded event, Emitter<ReaderState> emit) async {
+    ReaderBookmarkAdded event,
+    Emitter<ReaderState> emit,
+  ) async {
     final bookId = state.book?.bookId;
     if (bookId == null) return;
     await addBookmark(bookId, state.position, label: event.label);
@@ -270,17 +322,39 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
   }
 
   Future<void> _onBookmarkDeleted(
-      ReaderBookmarkDeleted event, Emitter<ReaderState> emit) async {
+    ReaderBookmarkDeleted event,
+    Emitter<ReaderState> emit,
+  ) async {
     await deleteBookmark(event.bookmarkId);
   }
 
   void _onBookmarkJumped(
-      ReaderBookmarkJumped event, Emitter<ReaderState> emit) {
+    ReaderBookmarkJumped event,
+    Emitter<ReaderState> emit,
+  ) {
     emit(state.copyWith(position: event.bookmark.position));
   }
 
-  void _onBookmarksUpdated(
-      _BookmarksUpdated event, Emitter<ReaderState> emit) {
+  void _onSearchResultJumped(
+    ReaderSearchResultJumped event,
+    Emitter<ReaderState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        position: state.position.copyWith(chapterIndex: event.chapterIndex),
+        highlightQuery: event.query,
+      ),
+    );
+  }
+
+  void _onHighlightCleared(
+    ReaderHighlightCleared event,
+    Emitter<ReaderState> emit,
+  ) {
+    emit(state.copyWith(clearHighlight: true));
+  }
+
+  void _onBookmarksUpdated(_BookmarksUpdated event, Emitter<ReaderState> emit) {
     emit(state.copyWith(bookmarks: event.bookmarks));
   }
 

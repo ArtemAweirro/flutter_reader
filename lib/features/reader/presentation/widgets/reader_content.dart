@@ -46,6 +46,20 @@ class _ReaderContentState extends State<ReaderContent> {
   }
 
   @override
+  void didUpdateWidget(ReaderContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scrollDirection != widget.scrollDirection) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final state = context.read<ReaderBloc>().state;
+        if (state.status == ReaderStatus.success) {
+          _restorePosition(state);
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _debounceTimer?.cancel();
     _verticalController.dispose();

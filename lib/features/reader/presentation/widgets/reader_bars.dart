@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/reader_bloc.dart';
@@ -109,12 +110,15 @@ class ReaderBottomBar extends StatelessWidget {
                   tooltip: 'Предыдущая глава',
                 ),
                 Expanded(
-                  child: Text(
-                    totalChapters > 0
-                        ? '${currentIndex + 1} / $totalChapters'
-                        : '',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall,
+                  child: GestureDetector(
+                    onTap: () => _showChapterDialog(context, totalChapters),
+                    child: Text(
+                      totalChapters > 0
+                          ? '${currentIndex + 1} / $totalChapters'
+                          : '',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -132,5 +136,54 @@ class ReaderBottomBar extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _showChapterDialog(BuildContext context, int totalChapters) {
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Перейти к главе'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: InputDecoration(
+            hintText: '1 – $totalChapters',
+            prefixIcon: const Icon(Icons.menu_book_outlined),
+          ),
+          autofocus: true,
+          onSubmitted: (value) {
+            _jumpToChapter(context, controller.text, totalChapters);
+            Navigator.pop(ctx);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () {
+              _jumpToChapter(context, controller.text, totalChapters);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Перейти'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _jumpToChapter(BuildContext context, String input, int totalChapters) {
+    final number = int.tryParse(input);
+    if (number == null || number < 1 || number > totalChapters) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Введите число от 1 до $totalChapters')),
+      );
+      return;
+    }
+    context.read<ReaderBloc>().add(ReaderChapterChanged(number - 1));
   }
 }

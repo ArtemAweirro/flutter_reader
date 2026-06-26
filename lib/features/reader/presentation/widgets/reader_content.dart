@@ -83,9 +83,13 @@ class _ReaderContentState extends State<ReaderContent> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.scrollDirection == Axis.vertical
-        ? _buildVertical()
-        : _buildHorizontal();
+    return BlocListener<ReaderBloc, ReaderState>(
+      listenWhen: (prev, curr) => prev.chapterIndex != curr.chapterIndex,
+      listener: (context, state) => _restorePosition(state),
+      child: widget.scrollDirection == Axis.vertical
+          ? _buildVertical()
+          : _buildHorizontal(),
+    );
   }
 
   void _restorePosition(ReaderState state) {

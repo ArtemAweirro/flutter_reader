@@ -25,10 +25,12 @@ class ReaderTopBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ReaderBloc, ReaderState>(
       buildWhen: (prev, curr) =>
-          prev.book != curr.book || prev.position != curr.position,
+          prev.book?.bookId != curr.book?.bookId ||
+          prev.chapterIndex != curr.chapterIndex,
       builder: (context, state) {
         final chapter = state.currentChapter;
         return AppBar(
+          centerTitle: false,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

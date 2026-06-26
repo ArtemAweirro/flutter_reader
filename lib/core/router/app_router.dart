@@ -22,7 +22,6 @@ class AppRouter {
   late final GoRouter router = GoRouter(
     navigatorKey: navigatorKey,
     initialLocation: AppRoutes.bookList,
-    debugLogDiagnostics: true,   // TODO убрать в release-сборке
     routes: [
       GoRoute(
         path: AppRoutes.bookList,

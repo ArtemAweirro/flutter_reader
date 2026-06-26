@@ -36,14 +36,11 @@ Future<ReaderBookEntity> _parseFb2InIsolate(_Fb2ParseParams params) async {
 
   final chapters = _extractChapters(document);
 
-  final fullText = chapters.map((c) => c.content).join('\n\n\n');
-
   return ReaderBookEntity(
     bookId: params.bookId,
     title: title,
     author: author,
     chapters: chapters,
-    fullText: fullText,
   );
 }
 

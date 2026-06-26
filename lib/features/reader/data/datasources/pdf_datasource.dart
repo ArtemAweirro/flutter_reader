@@ -34,8 +34,6 @@ Future<ReaderBookEntity> _parsePdfInIsolate(_PdfParseParams params) async {
 
   final chapters = _extractChapters(document);
 
-  final fullText = chapters.map((e) => e.content).join('\n\n\n');
-
   document.dispose();
 
   return ReaderBookEntity(
@@ -43,7 +41,6 @@ Future<ReaderBookEntity> _parsePdfInIsolate(_PdfParseParams params) async {
     title: title,
     author: author,
     chapters: chapters,
-    fullText: fullText,
   );
 }
 

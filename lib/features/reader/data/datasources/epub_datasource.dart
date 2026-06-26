@@ -33,14 +33,12 @@ Future<ReaderBookEntity> _parseEpubInIsolate(_EpubParseParams params) async {
   final title = epubBook.Title ?? 'Без названия';
   final author = epubBook.Author;
   final chapters = _extractChapters(epubBook);
-  final fullText = chapters.map((c) => c.content).join('\n\n\n');
- 
+
   return ReaderBookEntity(
     bookId: params.bookId,
     title: title,
     author: author,
     chapters: chapters,
-    fullText: fullText,
   );
 }
  

@@ -45,22 +45,22 @@ final class ReaderChapterChanged extends ReaderEvent {
   List<Object?> get props => [chapterIndex];
 }
 
-/// Обновить позицию скролла в горизонтальном режиме (offset внутри главы)
+/// Обновить позицию скролла — offset символа от начала полного текста
 final class ReaderScrolled extends ReaderEvent {
-  final double scrollOffset;
-  const ReaderScrolled(this.scrollOffset);
+  final int charOffset;
+  const ReaderScrolled(this.charOffset);
 
   @override
-  List<Object?> get props => [scrollOffset];
+  List<Object?> get props => [charOffset];
 }
 
-/// Обновить позицию скролла в вертикальном режиме (offset по всему тексту)
+/// Обновить позицию скролла в вертикальном режиме — offset символа
 final class ReaderVerticalScrolled extends ReaderEvent {
-  final double verticalOffset;
-  const ReaderVerticalScrolled(this.verticalOffset);
+  final int charOffset;
+  const ReaderVerticalScrolled(this.charOffset);
 
   @override
-  List<Object?> get props => [verticalOffset];
+  List<Object?> get props => [charOffset];
 }
 
 /// Сохранить текущую позицию (при уходе с экрана)
@@ -149,18 +149,29 @@ final class ReaderState extends Equatable {
     this.highlightQuery,
   });
 
-  /// Текущая глава
+  int get chapterIndex {
+    final chapters = book?.chapters;
+    if (chapters == null || chapters.isEmpty) return 0;
+    int offset = 0;
+    for (int i = 0; i < chapters.length; i++) {
+      offset += chapters[i].content.length;
+      if (position.charOffset < offset) return i;
+    }
+    return chapters.length - 1;
+  }
+
   ChapterEntity? get currentChapter {
     final chapters = book?.chapters;
     if (chapters == null || chapters.isEmpty) return null;
-    if (position.chapterIndex >= chapters.length) return chapters.last;
-    return chapters[position.chapterIndex];
+    return chapters[chapterIndex];
   }
 
-  bool get hasNextChapter =>
-      book != null && position.chapterIndex < book!.totalChapters - 1;
+  bool get hasNextChapter {
+    final chapters = book?.chapters;
+    return chapters != null && chapterIndex < chapters.length - 1;
+  }
 
-  bool get hasPreviousChapter => position.chapterIndex > 0;
+  bool get hasPreviousChapter => chapterIndex > 0;
 
   ReaderState copyWith({
     ReaderStatus? status,
@@ -235,7 +246,6 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
   Future<void> _onOpened(ReaderOpened event, Emitter<ReaderState> emit) async {
     emit(state.copyWith(status: ReaderStatus.loading));
     try {
-      // Загружаем книгу и сохранённую позицию параллельно
       final results = await Future.wait([
         openBook(event.bookId, event.filePath),
         getSavedPosition(event.bookId),
@@ -244,7 +254,6 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
       final book = results[0] as ReaderBookEntity;
       final position = results[1] as ReadingPosition;
 
-      // Подписываемся на закладки
       _bookmarksSubscription?.cancel();
       _bookmarksSubscription = watchBookmarks(
         event.bookId,
@@ -271,21 +280,23 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     ReaderChapterChanged event,
     Emitter<ReaderState> emit,
   ) {
+    final chapters = state.book?.chapters ?? [];
+    final targetIndex = event.chapterIndex.clamp(0, chapters.length - 1);
+    int offset = 0;
+    for (int i = 0; i < targetIndex; i++) {
+      offset += chapters[i].content.length;
+    }
     emit(
       state.copyWith(
-        position: state.position.copyWith(
-          chapterIndex: event.chapterIndex,
-          scrollOffset: 0.0,
-        ),
+        position: state.position.copyWith(charOffset: offset),
       ),
     );
   }
 
   void _onScrolled(ReaderScrolled event, Emitter<ReaderState> emit) {
-    // Горизонтальный режим — обновляем offset внутри текущей главы
     emit(
       state.copyWith(
-        position: state.position.copyWith(scrollOffset: event.scrollOffset),
+        position: state.position.copyWith(charOffset: event.charOffset),
       ),
     );
   }
@@ -294,10 +305,9 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     ReaderVerticalScrolled event,
     Emitter<ReaderState> emit,
   ) {
-    // Вертикальный режим — обновляем offset по всему тексту
     emit(
       state.copyWith(
-        position: state.position.copyWith(verticalOffset: event.verticalOffset),
+        position: state.position.copyWith(charOffset: event.charOffset),
       ),
     );
   }
@@ -318,7 +328,6 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     final bookId = state.book?.bookId;
     if (bookId == null) return;
     await addBookmark(bookId, state.position, label: event.label);
-    // Список обновится автоматически через стрим
   }
 
   Future<void> _onBookmarkDeleted(
@@ -339,9 +348,15 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     ReaderSearchResultJumped event,
     Emitter<ReaderState> emit,
   ) {
+    final chapters = state.book?.chapters ?? [];
+    final targetIndex = event.chapterIndex.clamp(0, chapters.length - 1);
+    int offset = 0;
+    for (int i = 0; i < targetIndex; i++) {
+      offset += chapters[i].content.length;
+    }
     emit(
       state.copyWith(
-        position: state.position.copyWith(chapterIndex: event.chapterIndex),
+        position: state.position.copyWith(charOffset: offset),
         highlightQuery: event.query,
       ),
     );
@@ -360,7 +375,7 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
 
   @override
   Future<void> close() {
-    _bookmarksSubscription?.cancel(); // предотвращаем утечку памяти
+    _bookmarksSubscription?.cancel();
     return super.close();
   }
 }

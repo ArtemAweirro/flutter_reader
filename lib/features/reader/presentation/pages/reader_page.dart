@@ -124,7 +124,7 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
     return BlocListener<ReaderBloc, ReaderState>(
       // Сохраняем позицию при любом изменении главы
       listenWhen: (prev, curr) =>
-          prev.position.chapterIndex != curr.position.chapterIndex,
+          prev.chapterIndex != curr.chapterIndex,
       listener: (context, state) => _savePosition(),
       child: PopScope(
         onPopInvokedWithResult: (didPop, _) {

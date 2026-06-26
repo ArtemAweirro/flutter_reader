@@ -84,7 +84,7 @@ class ReaderBottomBar extends StatelessWidget {
       builder: (context, state) {
         final bloc = context.read<ReaderBloc>();
         final totalChapters = state.book?.totalChapters ?? 0;
-        final currentIndex = state.position.chapterIndex;
+        final currentIndex = state.chapterIndex;
 
         return SafeArea(
           child: Container(

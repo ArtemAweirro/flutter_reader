@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 
 import '../../../reader/presentation/bloc/reader_bloc.dart';
 
-/// Bottom sheet поиска — по номеру главы и по словам в тексте.
+/// Bottom sheet поиска по словам в тексте.
 class ReaderSearchSheet extends StatefulWidget {
   const ReaderSearchSheet({super.key});
 
@@ -24,26 +23,14 @@ class ReaderSearchSheet extends StatefulWidget {
   State<ReaderSearchSheet> createState() => _ReaderSearchSheetState();
 }
 
-class _ReaderSearchSheetState extends State<ReaderSearchSheet>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-  final _chapterController = TextEditingController();
+class _ReaderSearchSheetState extends State<ReaderSearchSheet> {
   final _searchController = TextEditingController();
 
-  // Результаты поиска по тексту: индекс главы + смещение вхождения
   List<_SearchResult> _searchResults = [];
   bool _isSearching = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
-    _chapterController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -51,7 +38,6 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      // Поднимаем sheet над клавиатурой
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
@@ -60,108 +46,17 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet>
         initialChildSize: 0.6,
         maxChildSize: 0.9,
         builder: (context, scrollController) {
-          return Column(
-            children: [
-              _buildHeader(context),
-              TabBar(
-                controller: _tabController,
-                tabs: const [
-                  Tab(text: 'По главе'),
-                  Tab(text: 'По тексту'),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildChapterSearch(context),
-                    _buildTextSearch(context, scrollController),
-                  ],
-                ),
-              ),
-            ],
-          );
+          return _buildTextSearch(context, scrollController);
         },
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-      child: Row(
-        children: [
-          Text('Поиск', style: Theme.of(context).textTheme.titleMedium),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- Поиск по номеру главы ---
-
-  Widget _buildChapterSearch(BuildContext context) {
-    final totalChapters =
-        context.read<ReaderBloc>().state.book?.totalChapters ?? 0;
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Перейти к главе (1 – $totalChapters)',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const Gap(12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _chapterController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                    hintText: 'Номер главы',
-                    prefixIcon: Icon(Icons.menu_book_outlined),
-                  ),
-                  onSubmitted: (_) => _goToChapter(context, totalChapters),
-                ),
-              ),
-              const Gap(12),
-              FilledButton(
-                onPressed: () => _goToChapter(context, totalChapters),
-                child: const Text('Перейти'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _goToChapter(BuildContext context, int totalChapters) {
-    final input = int.tryParse(_chapterController.text);
-    if (input == null || input < 1 || input > totalChapters) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Введите число от 1 до $totalChapters')),
-      );
-      return;
-    }
-    context.read<ReaderBloc>().add(ReaderChapterChanged(input - 1));
-    Navigator.pop(context);
-  }
-
-  // --- Поиск по тексту ---
-
   Widget _buildTextSearch(
       BuildContext context, ScrollController scrollController) {
     return Column(
       children: [
+        _buildHeader(context),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -223,6 +118,22 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet>
     );
   }
 
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+      child: Row(
+        children: [
+          Text('Поиск', style: Theme.of(context).textTheme.titleMedium),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _runSearch(BuildContext context) {
     final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) return;
@@ -243,7 +154,6 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet>
         final index = content.indexOf(query, start);
         if (index == -1) break;
 
-        // Формируем сниппет вокруг вхождения
         final snippetStart = (index - 40).clamp(0, content.length);
         final snippetEnd = (index + query.length + 40).clamp(0, content.length);
         final snippet = chapter.content.substring(snippetStart, snippetEnd);
@@ -254,7 +164,6 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet>
         ));
 
         start = index + query.length;
-        // Не более 3 вхождений на главу для производительности
         if (results.where((r) => r.chapterIndex == chapter.index).length >= 3) {
           break;
         }
@@ -267,7 +176,6 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet>
     });
   }
 
-  /// Подсвечивает найденное слово в сниппете
   Widget _buildHighlightedText(
       String snippet, String query, BuildContext context) {
     final lowerSnippet = snippet.toLowerCase();

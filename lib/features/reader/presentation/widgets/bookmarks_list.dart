@@ -75,10 +75,17 @@ class BookmarksList extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              Navigator.pop(context);
-              context
-                  .read<ReaderBloc>()
-                  .add(const ReaderBookmarkAdded());
+              showDialog(
+                context: context,
+                builder: (dialogContext) => _BookmarkAddDialog(
+                  onConfirm: (label) {
+                    context
+                        .read<ReaderBloc>()
+                        .add(ReaderBookmarkAdded(label: label));
+                    Navigator.pop(context); // close bottom sheet
+                  },
+                ),
+              );
             },
             tooltip: 'Добавить закладку',
           ),
@@ -88,6 +95,60 @@ class BookmarksList extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _BookmarkAddDialog extends StatefulWidget {
+  final void Function(String label) onConfirm;
+
+  const _BookmarkAddDialog({required this.onConfirm});
+
+  @override
+  State<_BookmarkAddDialog> createState() => _BookmarkAddDialogState();
+}
+
+class _BookmarkAddDialogState extends State<_BookmarkAddDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Новая закладка'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: 'Описание закладки',
+        ),
+        textCapitalization: TextCapitalization.sentences,
+        onSubmitted: (value) {
+          if (value.trim().isNotEmpty) {
+            widget.onConfirm(value.trim());
+          }
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Отмена'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final text = _controller.text.trim();
+            if (text.isNotEmpty) {
+              widget.onConfirm(text);
+            }
+          },
+          child: const Text('Сохранить'),
+        ),
+      ],
     );
   }
 }

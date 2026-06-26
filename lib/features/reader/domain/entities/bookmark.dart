@@ -1,34 +1,23 @@
 import 'package:equatable/equatable.dart';
 import 'reading_position.dart';
 
-// ---------------------------------------------------------------------------
-// BookmarkEntity — закладка
-// ---------------------------------------------------------------------------
-
 class BookmarkEntity extends Equatable {
   final int id;
   final int bookId;
-  final int chapterIndex;
-  final double scrollOffset;
+  final int charOffset;
   final String? label;
   final DateTime createdAt;
 
   const BookmarkEntity({
     required this.id,
     required this.bookId,
-    required this.chapterIndex,
-    required this.scrollOffset,
+    required this.charOffset,
     this.label,
     required this.createdAt,
   });
 
-  /// Позиция закладки
-  ReadingPosition get position => ReadingPosition(
-        chapterIndex: chapterIndex,
-        scrollOffset: scrollOffset,
-      );
+  ReadingPosition get position => ReadingPosition(charOffset: charOffset);
 
   @override
-  List<Object?> get props =>
-      [id, bookId, chapterIndex, scrollOffset, label, createdAt];
+  List<Object?> get props => [id, bookId, charOffset, label, createdAt];
 }

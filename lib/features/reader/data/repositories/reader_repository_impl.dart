@@ -80,8 +80,7 @@ class ReaderRepositoryImpl implements ReaderRepository {
     return BookmarkEntity(
       id: id,
       bookId: bookId,
-      chapterIndex: position.chapterIndex,
-      scrollOffset: position.scrollOffset,
+      charOffset: position.charOffset,
       label: label,
       createdAt: DateTime.now(),
     );

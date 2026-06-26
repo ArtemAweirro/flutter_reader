@@ -38,15 +38,8 @@ class ReaderLocalDataSource {
         label: Value(label),
       ));
 
-  Future<Bookmark?> getBookmarkById(int id) async {
-    final all = await _readerDao.watchBookmarks(0).first;
-    // Ищем по id среди всех закладок
-    try {
-      return all.firstWhere((b) => b.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  Future<Bookmark?> getBookmarkById(int id) =>
+      _readerDao.getBookmarkById(id);
 
   Future<void> deleteBookmark(int id) => _readerDao.deleteBookmark(id);
 }

@@ -20,6 +20,9 @@ class ReaderDao extends DatabaseAccessor<AppDatabase> with _$ReaderDaoMixin {
   Future<int> insertBookmark(BookmarksCompanion entry) =>
       into(bookmarks).insert(entry);
 
+  Future<Bookmark?> getBookmarkById(int id) =>
+      (select(bookmarks)..where((b) => b.id.equals(id))).getSingleOrNull();
+
   Future<int> deleteBookmark(int id) =>
       (delete(bookmarks)..where((b) => b.id.equals(id))).go();
 

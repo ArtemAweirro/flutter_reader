@@ -10,10 +10,8 @@ class ReadingPosition extends Equatable {
 
   String toStorageString() => '$charOffset';
 
-  factory ReadingPosition.fromStorageString(String s) {
-    final parts = s.split(':');
-    return ReadingPosition(charOffset: int.tryParse(parts[0]) ?? 0);
-  }
+  factory ReadingPosition.fromStorageString(String s) =>
+      ReadingPosition(charOffset: int.tryParse(s) ?? 0);
 
   factory ReadingPosition.start() => const ReadingPosition();
 

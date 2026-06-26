@@ -75,8 +75,12 @@ class _ReaderContentState extends State<ReaderContent> {
       final max = _verticalController.position.maxScrollExtent;
       if (max <= 0) return;
       final ratio = _verticalController.offset / max;
-      final text = context.read<ReaderBloc>().state.book?.fullText ?? '';
-      final charOffset = (ratio * text.length).round();
+      final chapters =
+          context.read<ReaderBloc>().state.book?.chapters ?? [];
+      if (chapters.isEmpty) return;
+      final totalLength =
+          chapters.fold<int>(0, (sum, ch) => sum + ch.content.length);
+      final charOffset = (ratio * totalLength).round();
       context.read<ReaderBloc>().add(ReaderVerticalScrolled(charOffset));
     });
   }
@@ -95,10 +99,13 @@ class _ReaderContentState extends State<ReaderContent> {
   void _restorePosition(ReaderState state) {
     if (!mounted) return;
     if (widget.scrollDirection == Axis.vertical) {
-      final text = state.book?.fullText ?? '';
-      if (text.isEmpty || !_verticalController.hasClients) return;
+      final chapters = state.book?.chapters ?? [];
+      if (chapters.isEmpty || !_verticalController.hasClients) return;
+      final totalLength =
+          chapters.fold<int>(0, (sum, ch) => sum + ch.content.length);
+      if (totalLength <= 0) return;
       final ratio =
-          (state.position.charOffset / text.length).clamp(0.0, 1.0);
+          (state.position.charOffset / totalLength).clamp(0.0, 1.0);
       _verticalController
           .jumpTo(_verticalController.position.maxScrollExtent * ratio);
     } else {
@@ -113,8 +120,10 @@ class _ReaderContentState extends State<ReaderContent> {
     return BlocBuilder<ReaderBloc, ReaderState>(
       buildWhen: (prev, curr) => prev.book?.bookId != curr.book?.bookId,
       builder: (context, state) {
-        final text = state.book?.fullText ?? '';
-        if (text.isEmpty) return const Center(child: Text('Нет содержимого'));
+        final chapters = state.book?.chapters ?? [];
+        if (chapters.isEmpty) {
+          return const Center(child: Text('Нет содержимого'));
+        }
 
         final colorScheme = Theme.of(context).colorScheme;
         final textColor = applyContrast(
@@ -123,18 +132,39 @@ class _ReaderContentState extends State<ReaderContent> {
           colorScheme.brightness,
         );
 
-        return SingleChildScrollView(
+        return ListView.builder(
           controller: _verticalController,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: widget.fontSize,
-                color: textColor,
+          itemCount: chapters.length,
+          itemBuilder: (context, index) {
+            final chapter = chapters[index];
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (chapter.title.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        chapter.title,
+                        style: TextStyle(
+                          fontSize: widget.fontSize * 1.2,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                    ),
+                  Text(
+                    chapter.content,
+                    style: TextStyle(
+                      fontSize: widget.fontSize,
+                      color: textColor,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );

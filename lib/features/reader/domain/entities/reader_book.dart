@@ -10,11 +10,8 @@ class ReaderBookEntity extends Equatable {
   final String title;
   final String? author;
 
-  /// Главы — используются в горизонтальном режиме (страница = глава)
+  /// Главы — используются во всех режимах
   final List<ChapterEntity> chapters;
-
-  /// Весь текст книги одной строкой — используется в вертикальном режиме
-  final String fullText;
 
   int get totalChapters => chapters.length;
 
@@ -23,7 +20,6 @@ class ReaderBookEntity extends Equatable {
     required this.title,
     this.author,
     required this.chapters,
-    required this.fullText,
   });
 
   @override

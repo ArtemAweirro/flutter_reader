@@ -97,16 +97,16 @@ final class ReaderBookmarkJumped extends ReaderEvent {
 
 /// Перейти к результату поиска и подсветить найденный текст
 final class ReaderSearchResultJumped extends ReaderEvent {
-  final int chapterIndex;
+  final int charOffset;
   final String query;
 
   const ReaderSearchResultJumped({
-    required this.chapterIndex,
+    required this.charOffset,
     required this.query,
   });
 
   @override
-  List<Object?> get props => [chapterIndex, query];
+  List<Object?> get props => [charOffset, query];
 }
 
 /// Сбросить подсветку поиска
@@ -348,15 +348,9 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     ReaderSearchResultJumped event,
     Emitter<ReaderState> emit,
   ) {
-    final chapters = state.book?.chapters ?? [];
-    final targetIndex = event.chapterIndex.clamp(0, chapters.length - 1);
-    int offset = 0;
-    for (int i = 0; i < targetIndex; i++) {
-      offset += chapters[i].content.length;
-    }
     emit(
       state.copyWith(
-        position: state.position.copyWith(charOffset: offset),
+        position: state.position.copyWith(charOffset: event.charOffset),
         highlightQuery: event.query,
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter_reader/features/book_list/presentation/pages/book_list_page.dart';
+import 'package:flutter_reader/features/reader/presentation/pages/reader_page.dart';
 
 
 /// Имена маршрутов
@@ -10,14 +11,17 @@ abstract class AppRoutes {
   static const reader = '/reader/:bookId';
 
   /// Хелпер для навигации к читалке
-  static String readerPath(int bookId) => '/reader/$bookId';
+  static String readerPath(int bookId, String filePath) =>
+      '/reader/$bookId?filePath=${Uri.encodeComponent(filePath)}';
 }
 
 @singleton
 class AppRouter {
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   late final GoRouter router = GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: AppRoutes.bookList,
-    debugLogDiagnostics: true,   // TODO убрать в release-сборке
     routes: [
       GoRoute(
         path: AppRoutes.bookList,
@@ -29,7 +33,8 @@ class AppRouter {
         name: 'reader',
         builder: (context, state) {
           final bookId = int.parse(state.pathParameters['bookId']!);
-          return _ReaderPlaceholder(bookId: bookId);
+          final filePath = state.uri.queryParameters['filePath'] ?? '';
+          return ReaderPage(bookId: bookId, filePath: filePath);
         },
       ),
     ],
@@ -37,21 +42,4 @@ class AppRouter {
       body: Center(child: Text('Страница не найдена: ${state.error}')),
     ),
   );
-}
-
-// ---------------------------------------------------------------------------
-// Временные заглушки
-// ---------------------------------------------------------------------------
-
-class _ReaderPlaceholder extends StatelessWidget {
-  final int bookId;
-  const _ReaderPlaceholder({required this.bookId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Книга #$bookId')),
-      body: const Center(child: Text('Читалка — скоро здесь')),
-    );
-  }
 }

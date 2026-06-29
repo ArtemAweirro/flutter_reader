@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:flutter_reader/core/di/injection.dart';
+import 'package:flutter_reader/core/router/app_router.dart';
 import 'package:flutter_reader/features/book_list/presentation/bloc/book_list_bloc.dart';
 import 'package:flutter_reader/features/book_list/presentation/widgets/book_card.dart';
 import 'package:flutter_reader/features/book_list/presentation/widgets/filter_bar.dart';
+import 'package:go_router/go_router.dart';
 
 class BookListPage extends StatefulWidget {
   const BookListPage({super.key});
@@ -77,7 +79,10 @@ class _BookListPageState extends State<BookListPage> {
                           itemCount: state.books.length,
                           itemBuilder: (context, index) {
                             final book = state.books[index];
-                            return BookCard(book: book);
+                            return BookCard(
+                              book: book,
+                              onTap: () => context.push(AppRoutes.readerPath(book.id, book.filePath)),
+                            );
                           },
                         ),
                 ),

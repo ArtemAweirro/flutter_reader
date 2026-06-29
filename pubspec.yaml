@@ -39,12 +39,16 @@ dependencies:
   # Book Formats
   epubx: ^4.0.0 # Чтение EPUB файлов
   xml: ^6.0.1 # Чтение и парсинг XML (для FB2)
-  pdfx: ^2.9.2 # Чтение PDF файлов
+  syncfusion_flutter_pdf: ^33.2.13 # Работа с PDF файлами
+
+  # UI
+  screen_brightness: ^2.1.11 # Управление яркостью экрана
 
   # Utils
   json_annotation: ^4.12.0 # Аннотации для генерации JSON сериализации
   rxdart: ^0.28.0 # Реактивные расширения для Dart
   gap: ^3.0.1 # Простые отступы между виджетами
+  scrollable_positioned_list: ^0.3.8
 
 dev_dependencies:
   flutter_test:

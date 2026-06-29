@@ -28,6 +28,35 @@ import '../../features/book_list/domain/usecases/toggle_favorite.dart' as _i386;
 import '../../features/book_list/domain/usecases/toggle_read.dart' as _i1040;
 import '../../features/book_list/presentation/bloc/book_list_bloc.dart'
     as _i897;
+import '../../features/reader/data/datasources/epub_datasource.dart' as _i113;
+import '../../features/reader/data/datasources/fb2_datasource.dart' as _i610;
+import '../../features/reader/data/datasources/pdf_datasource.dart' as _i737;
+import '../../features/reader/data/datasources/reader_local_datasource.dart'
+    as _i847;
+import '../../features/reader/data/repositories/book_format_detector.dart'
+    as _i660;
+import '../../features/reader/data/repositories/reader_repository_impl.dart'
+    as _i788;
+import '../../features/reader/domain/repositories/reader_repository.dart'
+    as _i820;
+import '../../features/reader/domain/usecases/add_bookmark.dart' as _i1007;
+import '../../features/reader/domain/usecases/delete_bookmark.dart' as _i393;
+import '../../features/reader/domain/usecases/get_saved_position.dart' as _i47;
+import '../../features/reader/domain/usecases/open_book.dart' as _i1070;
+import '../../features/reader/domain/usecases/save_position.dart' as _i810;
+import '../../features/reader/domain/usecases/watch_bookmarks.dart' as _i512;
+import '../../features/reader/presentation/bloc/reader_bloc.dart' as _i523;
+import '../../features/settings/data/repositories/settings_repository_impl.dart'
+    as _i955;
+import '../../features/settings/domain/repositories/settings_repository.dart'
+    as _i674;
+import '../../features/settings/domain/usecases/get_settings.dart' as _i558;
+import '../../features/settings/domain/usecases/set_brightness.dart' as _i145;
+import '../../features/settings/domain/usecases/set_contrast.dart' as _i40;
+import '../../features/settings/domain/usecases/set_font_size.dart' as _i733;
+import '../../features/settings/domain/usecases/set_scroll_direction.dart'
+    as _i832;
+import '../../features/settings/domain/usecases/set_theme_mode.dart' as _i743;
 import '../../features/settings/presentation/bloc/settings_bloc.dart' as _i585;
 import '../database/app_database.dart' as _i982;
 import '../database/books_dao.dart' as _i864;
@@ -42,6 +71,10 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     gh.factory<_i265.BookPickerService>(() => _i265.BookPickerService());
+    gh.factory<_i113.EpubDataSource>(() => _i113.EpubDataSource());
+    gh.factory<_i610.Fb2DataSource>(() => _i610.Fb2DataSource());
+    gh.factory<_i737.PdfDataSource>(() => _i737.PdfDataSource());
+    gh.factory<_i660.BookFormatDetector>(() => _i660.BookFormatDetector());
     gh.singleton<_i982.AppDatabase>(() => _i982.AppDatabase());
     gh.singleton<_i81.AppRouter>(() => _i81.AppRouter());
     gh.factory<_i864.BooksDao>(() => _i864.BooksDao(gh<_i982.AppDatabase>()));
@@ -51,13 +84,19 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i689.BookRepository>(
       () => _i149.BookRepositoryImpl(gh<_i864.BooksDao>()),
     );
-    gh.factory<_i585.SettingsBloc>(
-      () => _i585.SettingsBloc(gh<_i460.SharedPreferences>()),
-    );
     gh.factory<_i867.AddBookFromFile>(
       () => _i867.AddBookFromFile(
         gh<_i689.BookRepository>(),
         gh<_i265.BookPickerService>(),
+      ),
+    );
+    gh.factory<_i674.SettingsRepository>(
+      () => _i955.SettingsRepositoryImpl(gh<_i460.SharedPreferences>()),
+    );
+    gh.factory<_i847.ReaderLocalDataSource>(
+      () => _i847.ReaderLocalDataSource(
+        gh<_i864.BooksDao>(),
+        gh<_i1016.ReaderDao>(),
       ),
     );
     gh.factory<_i155.AddBook>(() => _i155.AddBook(gh<_i689.BookRepository>()));
@@ -73,6 +112,51 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1040.ToggleRead>(
       () => _i1040.ToggleRead(gh<_i689.BookRepository>()),
     );
+    gh.factory<_i820.ReaderRepository>(
+      () => _i788.ReaderRepositoryImpl(
+        gh<_i113.EpubDataSource>(),
+        gh<_i610.Fb2DataSource>(),
+        gh<_i737.PdfDataSource>(),
+        gh<_i847.ReaderLocalDataSource>(),
+        gh<_i660.BookFormatDetector>(),
+      ),
+    );
+    gh.factory<_i558.GetSettingsUseCase>(
+      () => _i558.GetSettingsUseCase(gh<_i674.SettingsRepository>()),
+    );
+    gh.factory<_i145.SetBrightnessUseCase>(
+      () => _i145.SetBrightnessUseCase(gh<_i674.SettingsRepository>()),
+    );
+    gh.factory<_i40.SetContrastUseCase>(
+      () => _i40.SetContrastUseCase(gh<_i674.SettingsRepository>()),
+    );
+    gh.factory<_i733.SetFontSizeUseCase>(
+      () => _i733.SetFontSizeUseCase(gh<_i674.SettingsRepository>()),
+    );
+    gh.factory<_i832.SetScrollDirectionUseCase>(
+      () => _i832.SetScrollDirectionUseCase(gh<_i674.SettingsRepository>()),
+    );
+    gh.factory<_i743.SetThemeModeUseCase>(
+      () => _i743.SetThemeModeUseCase(gh<_i674.SettingsRepository>()),
+    );
+    gh.factory<_i1007.AddBookmarkUseCase>(
+      () => _i1007.AddBookmarkUseCase(gh<_i820.ReaderRepository>()),
+    );
+    gh.factory<_i393.DeleteBookmarkUseCase>(
+      () => _i393.DeleteBookmarkUseCase(gh<_i820.ReaderRepository>()),
+    );
+    gh.factory<_i47.GetSavedPositionUseCase>(
+      () => _i47.GetSavedPositionUseCase(gh<_i820.ReaderRepository>()),
+    );
+    gh.factory<_i1070.OpenBookUseCase>(
+      () => _i1070.OpenBookUseCase(gh<_i820.ReaderRepository>()),
+    );
+    gh.factory<_i810.SavePositionUseCase>(
+      () => _i810.SavePositionUseCase(gh<_i820.ReaderRepository>()),
+    );
+    gh.factory<_i512.WatchBookmarksUseCase>(
+      () => _i512.WatchBookmarksUseCase(gh<_i820.ReaderRepository>()),
+    );
     gh.factory<_i897.BookListBloc>(
       () => _i897.BookListBloc(
         getBooks: gh<_i1031.GetBooks>(),
@@ -81,6 +165,26 @@ extension GetItInjectableX on _i174.GetIt {
         deleteBook: gh<_i90.DeleteBook>(),
         toggleFavorite: gh<_i386.ToggleFavorite>(),
         toggleRead: gh<_i1040.ToggleRead>(),
+      ),
+    );
+    gh.factory<_i585.SettingsBloc>(
+      () => _i585.SettingsBloc(
+        gh<_i558.GetSettingsUseCase>(),
+        gh<_i733.SetFontSizeUseCase>(),
+        gh<_i145.SetBrightnessUseCase>(),
+        gh<_i40.SetContrastUseCase>(),
+        gh<_i832.SetScrollDirectionUseCase>(),
+        gh<_i743.SetThemeModeUseCase>(),
+      ),
+    );
+    gh.factory<_i523.ReaderBloc>(
+      () => _i523.ReaderBloc(
+        openBook: gh<_i1070.OpenBookUseCase>(),
+        getSavedPosition: gh<_i47.GetSavedPositionUseCase>(),
+        savePosition: gh<_i810.SavePositionUseCase>(),
+        watchBookmarks: gh<_i512.WatchBookmarksUseCase>(),
+        addBookmark: gh<_i1007.AddBookmarkUseCase>(),
+        deleteBookmark: gh<_i393.DeleteBookmarkUseCase>(),
       ),
     );
     return this;

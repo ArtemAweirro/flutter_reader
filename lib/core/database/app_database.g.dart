@@ -822,7 +822,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
   final int id;
   final int bookId;
 
-  /// Номер страницы (для PDF/FB2) или CFI (для EPUB)
+  /// Символьный offset от начала полного текста книги
   final String position;
 
   /// Опциональное название закладки

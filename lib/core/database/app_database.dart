@@ -40,7 +40,7 @@ class Bookmarks extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get bookId => integer().references(Books, #id)();
  
-  /// Номер страницы (для PDF/FB2) или CFI (для EPUB)
+  /// Символьный offset от начала полного текста книги
   TextColumn get position => text()();
  
   /// Опциональное название закладки

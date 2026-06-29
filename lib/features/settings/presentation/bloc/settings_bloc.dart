@@ -2,16 +2,12 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-abstract class _PrefKeys {
-  static const fontSize = 'reader_font_size';
-  static const brightness = 'reader_brightness';
-  static const contrast = 'reader_contrast';
-  static const scrollDirection = 'reader_scroll_direction'; // 'vertical' | 'horizontal'
-  static const themeMode = 'app_theme_mode'; // 'system' | 'light' | 'dark'
-}
-
+import '../../domain/usecases/get_settings.dart';
+import '../../domain/usecases/set_font_size.dart';
+import '../../domain/usecases/set_brightness.dart';
+import '../../domain/usecases/set_contrast.dart';
+import '../../domain/usecases/set_scroll_direction.dart';
+import '../../domain/usecases/set_theme_mode.dart';
 
 final class SettingsState extends Equatable {
   final double fontSize;
@@ -48,7 +44,6 @@ final class SettingsState extends Equatable {
   List<Object?> get props =>
       [fontSize, brightness, contrast, scrollDirection, themeMode];
 }
-
 
 sealed class SettingsEvent extends Equatable {
   const SettingsEvent();
@@ -101,12 +96,23 @@ final class ThemeModeChanged extends SettingsEvent {
   List<Object?> get props => [mode];
 }
 
-
 @injectable
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  final SharedPreferences _prefs;
+  final GetSettingsUseCase _getSettings;
+  final SetFontSizeUseCase _setFontSize;
+  final SetBrightnessUseCase _setBrightness;
+  final SetContrastUseCase _setContrast;
+  final SetScrollDirectionUseCase _setScrollDirection;
+  final SetThemeModeUseCase _setThemeMode;
 
-  SettingsBloc(this._prefs) : super(const SettingsState()) {
+  SettingsBloc(
+    this._getSettings,
+    this._setFontSize,
+    this._setBrightness,
+    this._setContrast,
+    this._setScrollDirection,
+    this._setThemeMode,
+  ) : super(const SettingsState()) {
     on<SettingsLoaded>(_onLoaded);
     on<FontSizeChanged>(_onFontSize);
     on<BrightnessChanged>(_onBrightness);
@@ -116,62 +122,45 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   }
 
   void _onLoaded(SettingsLoaded event, Emitter<SettingsState> emit) {
+    final data = _getSettings();
     emit(SettingsState(
-      fontSize: _prefs.getDouble(_PrefKeys.fontSize) ?? 16.0,
-      brightness: _prefs.getDouble(_PrefKeys.brightness) ?? 1.0,
-      contrast: _prefs.getDouble(_PrefKeys.contrast) ?? 1.0,
-      scrollDirection:
-          _prefs.getString(_PrefKeys.scrollDirection) == 'vertical'
-              ? Axis.vertical
-              : Axis.horizontal,
-      themeMode: _themeModeFromString(
-          _prefs.getString(_PrefKeys.themeMode) ?? 'system'),
+      fontSize: data.fontSize,
+      brightness: data.brightness,
+      contrast: data.contrast,
+      scrollDirection: data.scrollDirection,
+      themeMode: data.themeMode,
     ));
+    // Применяем сохраненную яркость при загрузке
+    _setBrightness(data.brightness);
   }
 
   Future<void> _onFontSize(
       FontSizeChanged event, Emitter<SettingsState> emit) async {
-    await _prefs.setDouble(_PrefKeys.fontSize, event.value);
+    await _setFontSize(event.value);
     emit(state.copyWith(fontSize: event.value));
   }
 
   Future<void> _onBrightness(
       BrightnessChanged event, Emitter<SettingsState> emit) async {
-    await _prefs.setDouble(_PrefKeys.brightness, event.value);
+    await _setBrightness(event.value);
     emit(state.copyWith(brightness: event.value));
   }
 
   Future<void> _onContrast(
       ContrastChanged event, Emitter<SettingsState> emit) async {
-    await _prefs.setDouble(_PrefKeys.contrast, event.value);
+    await _setContrast(event.value);
     emit(state.copyWith(contrast: event.value));
   }
 
   Future<void> _onScrollDirection(
       ScrollDirectionChanged event, Emitter<SettingsState> emit) async {
-    await _prefs.setString(
-      _PrefKeys.scrollDirection,
-      event.direction == Axis.vertical ? 'vertical' : 'horizontal',
-    );
+    await _setScrollDirection(event.direction);
     emit(state.copyWith(scrollDirection: event.direction));
   }
 
   Future<void> _onThemeMode(
       ThemeModeChanged event, Emitter<SettingsState> emit) async {
-    await _prefs.setString(_PrefKeys.themeMode, _themeModeToString(event.mode));
+    await _setThemeMode(event.mode);
     emit(state.copyWith(themeMode: event.mode));
   }
-
-
-  ThemeMode _themeModeFromString(String s) => switch (s) {
-        'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        _ => ThemeMode.system,
-      };
-
-  String _themeModeToString(ThemeMode m) => switch (m) {
-        ThemeMode.light => 'light',
-        ThemeMode.dark => 'dark',
-        ThemeMode.system => 'system',
-      };
 }

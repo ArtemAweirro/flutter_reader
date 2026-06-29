@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../domain/entities/reader_book.dart';
 import '../../domain/entities/chapter.dart';
+import '../mappers/reader_book_mapper.dart';
 
 class _Fb2ParseParams {
   final int bookId;
@@ -36,7 +37,7 @@ Future<ReaderBookEntity> _parseFb2InIsolate(_Fb2ParseParams params) async {
 
   final chapters = _extractChapters(document);
 
-  return ReaderBookEntity.create(
+  return ReaderBookMapper.toEntity(
     bookId: params.bookId,
     title: title,
     author: author,

@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../domain/entities/reader_book.dart';
 import '../../domain/entities/chapter.dart';
+import '../mappers/reader_book_mapper.dart';
  
 class _EpubParseParams {
   final int bookId;
@@ -34,7 +35,7 @@ Future<ReaderBookEntity> _parseEpubInIsolate(_EpubParseParams params) async {
   final author = epubBook.Author;
   final chapters = _extractChapters(epubBook);
 
-  return ReaderBookEntity.create(
+  return ReaderBookMapper.toEntity(
     bookId: params.bookId,
     title: title,
     author: author,

@@ -6,6 +6,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 import '../../domain/entities/reader_book.dart';
 import '../../domain/entities/chapter.dart';
+import '../mappers/reader_book_mapper.dart';
 
 class _PdfParseParams {
   final int bookId;
@@ -36,7 +37,7 @@ Future<ReaderBookEntity> _parsePdfInIsolate(_PdfParseParams params) async {
 
   document.dispose();
 
-  return ReaderBookEntity.create(
+  return ReaderBookMapper.toEntity(
     bookId: params.bookId,
     title: title,
     author: author,

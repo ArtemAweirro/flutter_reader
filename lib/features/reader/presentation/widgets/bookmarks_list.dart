@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/bookmark.dart';
-import '../../domain/entities/chapter.dart';
 import '../bloc/reader_bloc.dart';
 
 /// Bottom sheet со списком закладок.
@@ -40,7 +39,6 @@ class BookmarksList extends StatelessWidget {
                       child: Text('Закладок пока нет'),
                     );
                   }
-                  final chapters = state.book?.chapters ?? [];
 
                   return ListView.builder(
                     controller: scrollController,
@@ -49,7 +47,6 @@ class BookmarksList extends StatelessWidget {
                       final bookmark = state.bookmarks[index];
                       return _BookmarkTile(
                         bookmark: bookmark,
-                        chapters: chapters,
                       );
                     },
                   );
@@ -155,44 +152,25 @@ class _BookmarkAddDialogState extends State<_BookmarkAddDialog> {
 
 class _BookmarkTile extends StatelessWidget {
   final BookmarkEntity bookmark;
-  final List<ChapterEntity> chapters;
 
   const _BookmarkTile({
     required this.bookmark,
-    required this.chapters,
   });
-
-  int _charOffsetToChapter(int charOffset) {
-    int offset = 0;
-    for (int i = 0; i < chapters.length; i++) {
-      offset += chapters[i].content.length;
-      if (charOffset < offset) return i;
-    }
-    return chapters.length - 1;
-  }
 
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<ReaderBloc>();
-    final chapterIdx = chapters.isNotEmpty
-        ? _charOffsetToChapter(bookmark.charOffset)
-        : 0;
 
     return ListTile(
       leading: const Icon(Icons.bookmark),
       title: Text(
-        bookmark.label ?? 'Глава ${chapterIdx + 1}',
+        bookmark.label ?? 'Закладка',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(
-        'Глава ${chapterIdx + 1}',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
       trailing: IconButton(
         icon: const Icon(Icons.delete_outline),
-        onPressed: () =>
-            bloc.add(ReaderBookmarkDeleted(bookmark.id)),
+        onPressed: () => bloc.add(ReaderBookmarkDeleted(bookmark.id)),
         tooltip: 'Удалить закладку',
       ),
       onTap: () {

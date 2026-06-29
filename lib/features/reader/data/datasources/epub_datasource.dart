@@ -34,7 +34,7 @@ Future<ReaderBookEntity> _parseEpubInIsolate(_EpubParseParams params) async {
   final author = epubBook.Author;
   final chapters = _extractChapters(epubBook);
 
-  return ReaderBookEntity(
+  return ReaderBookEntity.create(
     bookId: params.bookId,
     title: title,
     author: author,

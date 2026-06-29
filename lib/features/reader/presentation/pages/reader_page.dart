@@ -137,6 +137,7 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
         child: BlocBuilder<ReaderBloc, ReaderState>(
           builder: (context, state) {
             return Scaffold(
+              resizeToAvoidBottomInset: false,
               body: Stack(
                 children: [
                   _buildBody(context, state),

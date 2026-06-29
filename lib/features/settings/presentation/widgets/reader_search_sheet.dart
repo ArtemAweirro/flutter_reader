@@ -105,7 +105,7 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet> {
                   ),
                   onTap: () {
                     context.read<ReaderBloc>().add(ReaderSearchResultJumped(
-                          chapterIndex: result.chapterIndex,
+                          charOffset: result.charOffset,
                           query: _searchController.text.trim(),
                         ));
                     Navigator.pop(context);
@@ -145,6 +145,7 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet> {
 
     final chapters = context.read<ReaderBloc>().state.book?.chapters ?? [];
     final results = <_SearchResult>[];
+    int totalOffset = 0;
 
     for (final chapter in chapters) {
       final content = chapter.content.toLowerCase();
@@ -156,18 +157,24 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet> {
 
         final snippetStart = (index - 40).clamp(0, content.length);
         final snippetEnd = (index + query.length + 40).clamp(0, content.length);
-        final snippet = chapter.content.substring(snippetStart, snippetEnd);
+        final snippet = chapter.content
+            .substring(snippetStart, snippetEnd)
+            .replaceAll('\n', ' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
 
         results.add(_SearchResult(
           chapterIndex: chapter.index,
+          charOffset: totalOffset + index,
           snippet: snippet,
         ));
 
         start = index + query.length;
-        if (results.where((r) => r.chapterIndex == chapter.index).length >= 3) {
+        if (results.where((r) => r.chapterIndex == chapter.index).length >= 10) {
           break;
         }
       }
+      totalOffset += chapter.content.length;
     }
 
     setState(() {
@@ -209,10 +216,12 @@ class _ReaderSearchSheetState extends State<ReaderSearchSheet> {
 
 class _SearchResult {
   final int chapterIndex;
+  final int charOffset;
   final String snippet;
 
   const _SearchResult({
     required this.chapterIndex,
+    required this.charOffset,
     required this.snippet,
   });
 }

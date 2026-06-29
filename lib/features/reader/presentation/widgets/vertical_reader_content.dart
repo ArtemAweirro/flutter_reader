@@ -80,7 +80,7 @@ class _VerticalReaderContentState extends State<VerticalReaderContent> {
     _flatItems = items;
   }
 
-  void _restorePosition([int? offset]) {
+  void _restorePosition({int? offset, double alignment = 0}) {
     if (_flatItems.isEmpty || !_itemScrollController.isAttached) return;
 
     final targetOffset =
@@ -95,7 +95,7 @@ class _VerticalReaderContentState extends State<VerticalReaderContent> {
       }
     }
 
-    _itemScrollController.jumpTo(index: targetIndex);
+    _itemScrollController.jumpTo(index: targetIndex, alignment: alignment);
     _lastReportedOffset = _flatItems[targetIndex].charOffset;
   }
 
@@ -103,6 +103,7 @@ class _VerticalReaderContentState extends State<VerticalReaderContent> {
     final positions = _itemPositionsListener.itemPositions.value;
     if (positions.isEmpty) return;
 
+    // Находим первый видимый элемент (у которого верхняя граница ближе всего к 0)
     final minIndex = positions
         .where((p) => p.itemTrailingEdge > 0)
         .reduce((min, p) => p.itemLeadingEdge < min.itemLeadingEdge ? p : min)
@@ -129,6 +130,56 @@ class _VerticalReaderContentState extends State<VerticalReaderContent> {
     super.dispose();
   }
 
+  Widget _buildTextItem(
+    ReaderItem item,
+    Color textColor,
+    String? highlightQuery,
+    ColorScheme colorScheme,
+  ) {
+    final style = TextStyle(
+      fontSize: widget.fontSize,
+      color: textColor,
+      height: 1.5,
+      // Используем одинаковый шрифт всегда для стабильности верстки
+      fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+    );
+
+    if (highlightQuery == null || highlightQuery.isEmpty) {
+      return Text(item.text, style: style);
+    }
+
+    final String text = item.text;
+    final String lowerText = text.toLowerCase();
+    final String lowerQuery = highlightQuery.toLowerCase();
+    final List<TextSpan> spans = [];
+    int start = 0;
+
+    while (true) {
+      final index = lowerText.indexOf(lowerQuery, start);
+      if (index == -1) {
+        spans.add(TextSpan(text: text.substring(start)));
+        break;
+      }
+
+      if (index > start) {
+        spans.add(TextSpan(text: text.substring(start, index)));
+      }
+
+      spans.add(TextSpan(
+        text: text.substring(index, index + highlightQuery.length),
+        style: TextStyle(
+          backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.7),
+          color: colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.bold,
+        ),
+      ));
+
+      start = index + highlightQuery.length;
+    }
+
+    return Text.rich(TextSpan(style: style, children: spans));
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_flatItems.isEmpty) {
@@ -147,41 +198,50 @@ class _VerticalReaderContentState extends State<VerticalReaderContent> {
           prev.position.charOffset != curr.position.charOffset,
       listener: (context, state) {
         if (state.position.charOffset != _lastReportedOffset) {
-          _restorePosition(state.position.charOffset);
+          // Если есть поисковый запрос, центрируем (alignment 0.2 - чуть выше центра)
+          final isSearchJump = state.highlightQuery != null;
+          _restorePosition(
+            offset: state.position.charOffset,
+            alignment: isSearchJump ? 0.2 : 0.0,
+          );
         }
       },
-      child: ScrollablePositionedList.builder(
-        itemCount: _flatItems.length,
-        itemScrollController: _itemScrollController,
-        itemPositionsListener: _itemPositionsListener,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-        itemBuilder: (context, index) {
-          final item = _flatItems[index];
+      child: BlocBuilder<ReaderBloc, ReaderState>(
+        buildWhen: (prev, curr) => prev.highlightQuery != curr.highlightQuery,
+        builder: (context, state) {
+          return ScrollablePositionedList.builder(
+            itemCount: _flatItems.length,
+            itemScrollController: _itemScrollController,
+            itemPositionsListener: _itemPositionsListener,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+            itemBuilder: (context, index) {
+              final item = _flatItems[index];
 
-          if (item.isHeader) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16, top: 24),
-              child: Text(
-                item.text,
-                style: TextStyle(
-                  fontSize: widget.fontSize * 1.3,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
+              if (item.isHeader) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16, top: 24),
+                  child: Text(
+                    item.text,
+                    style: TextStyle(
+                      fontSize: widget.fontSize * 1.3,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                    ),
+                  ),
+                );
+              }
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildTextItem(
+                  item,
+                  textColor,
+                  state.highlightQuery,
+                  colorScheme,
                 ),
-              ),
-            );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              item.text,
-              style: TextStyle(
-                fontSize: widget.fontSize,
-                color: textColor,
-                height: 1.5,
-              ),
-            ),
+              );
+            },
           );
         },
       ),

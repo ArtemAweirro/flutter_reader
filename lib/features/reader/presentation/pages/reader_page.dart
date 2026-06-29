@@ -117,6 +117,8 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
       setState(() => _barsVisible = true);
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
+    // При любом тапе по экрану сбрасываем подсветку поиска
+    context.read<ReaderBloc>().add(const ReaderHighlightCleared());
   }
 
   @override

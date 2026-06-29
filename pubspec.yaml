@@ -48,6 +48,7 @@ dependencies:
   json_annotation: ^4.12.0 # Аннотации для генерации JSON сериализации
   rxdart: ^0.28.0 # Реактивные расширения для Dart
   gap: ^3.0.1 # Простые отступы между виджетами
+  scrollable_positioned_list: ^0.3.8
 
 dev_dependencies:
   flutter_test:

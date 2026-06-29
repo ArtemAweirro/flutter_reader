@@ -45,6 +45,15 @@ final class ReaderChapterChanged extends ReaderEvent {
   List<Object?> get props => [chapterIndex];
 }
 
+/// Перейти к странице (номеру элемента)
+final class ReaderPageJumpRequested extends ReaderEvent {
+  final int pageIndex;
+  const ReaderPageJumpRequested(this.pageIndex);
+
+  @override
+  List<Object?> get props => [pageIndex];
+}
+
 /// Обновить позицию скролла — offset символа от начала полного текста
 final class ReaderScrolled extends ReaderEvent {
   final int charOffset;
@@ -166,6 +175,23 @@ final class ReaderState extends Equatable {
     return chapters[chapterIndex];
   }
 
+  int get totalPages => book?.totalItems ?? 0;
+
+  int get currentPage {
+    final items = book?.items;
+    if (items == null || items.isEmpty) return 0;
+
+    int index = 0;
+    for (int i = 0; i < items.length; i++) {
+      if (items[i].charOffset <= position.charOffset) {
+        index = i;
+      } else {
+        break;
+      }
+    }
+    return index;
+  }
+
   bool get hasNextChapter {
     final chapters = book?.chapters;
     return chapters != null && chapterIndex < chapters.length - 1;
@@ -230,6 +256,7 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
   }) : super(const ReaderState()) {
     on<ReaderOpened>(_onOpened);
     on<ReaderChapterChanged>(_onChapterChanged);
+    on<ReaderPageJumpRequested>(_onPageJumpRequested);
     on<ReaderScrolled>(_onScrolled);
     on<ReaderVerticalScrolled>(_onVerticalScrolled);
     on<ReaderPositionSaveRequested>(_onPositionSaveRequested);
@@ -289,6 +316,21 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     emit(
       state.copyWith(
         position: state.position.copyWith(charOffset: offset),
+      ),
+    );
+  }
+
+  void _onPageJumpRequested(
+    ReaderPageJumpRequested event,
+    Emitter<ReaderState> emit,
+  ) {
+    final items = state.book?.items ?? [];
+    if (event.pageIndex < 0 || event.pageIndex >= items.length) return;
+
+    final targetOffset = items[event.pageIndex].charOffset;
+    emit(
+      state.copyWith(
+        position: state.position.copyWith(charOffset: targetOffset),
       ),
     );
   }

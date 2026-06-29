@@ -45,39 +45,7 @@ class _VerticalReaderContentState extends State<VerticalReaderContent> {
   }
 
   void _prepareItems() {
-    final chapters = context.read<ReaderBloc>().state.book?.chapters ?? [];
-    final List<ReaderItem> items = [];
-    int totalCharOffset = 0;
-
-    for (int i = 0; i < chapters.length; i++) {
-      final chapter = chapters[i];
-      
-      if (chapter.title.isNotEmpty) {
-        items.add(ReaderItem(
-          chapterIndex: i,
-          text: chapter.title,
-          isHeader: true,
-          charOffset: totalCharOffset,
-        ));
-      }
-
-      final paragraphs = chapter.content.split('\n');
-      int chapterCharOffset = 0;
-      for (int j = 0; j < paragraphs.length; j++) {
-        final pText = paragraphs[j].trim();
-        if (pText.isEmpty) continue;
-
-        items.add(ReaderItem(
-          chapterIndex: i,
-          paragraphIndex: j,
-          text: pText,
-          charOffset: totalCharOffset + chapterCharOffset,
-        ));
-        chapterCharOffset += paragraphs[j].length + 1;
-      }
-      totalCharOffset += chapter.content.length;
-    }
-    _flatItems = items;
+    _flatItems = context.read<ReaderBloc>().state.book?.items ?? [];
   }
 
   void _restorePosition({int? offset, double alignment = 0}) {

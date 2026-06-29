@@ -1,0 +1,190 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import '../../domain/entities/reader_item.dart';
+import '../bloc/reader_bloc.dart';
+import 'reader_content.dart';
+
+class VerticalReaderContent extends StatefulWidget {
+  final double fontSize;
+  final double brightness;
+  final double contrast;
+
+  const VerticalReaderContent({
+    super.key,
+    required this.fontSize,
+    required this.brightness,
+    required this.contrast,
+  });
+
+  @override
+  State<VerticalReaderContent> createState() => _VerticalReaderContentState();
+}
+
+class _VerticalReaderContentState extends State<VerticalReaderContent> {
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
+
+  List<ReaderItem> _flatItems = [];
+  Timer? _debounceTimer;
+  int? _lastReportedOffset;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepareItems();
+    _itemPositionsListener.itemPositions.addListener(_onPositionsChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _restorePosition();
+      }
+    });
+  }
+
+  void _prepareItems() {
+    final chapters = context.read<ReaderBloc>().state.book?.chapters ?? [];
+    final List<ReaderItem> items = [];
+    int totalCharOffset = 0;
+
+    for (int i = 0; i < chapters.length; i++) {
+      final chapter = chapters[i];
+      
+      if (chapter.title.isNotEmpty) {
+        items.add(ReaderItem(
+          chapterIndex: i,
+          text: chapter.title,
+          isHeader: true,
+          charOffset: totalCharOffset,
+        ));
+      }
+
+      final paragraphs = chapter.content.split('\n');
+      int chapterCharOffset = 0;
+      for (int j = 0; j < paragraphs.length; j++) {
+        final pText = paragraphs[j].trim();
+        if (pText.isEmpty) continue;
+
+        items.add(ReaderItem(
+          chapterIndex: i,
+          paragraphIndex: j,
+          text: pText,
+          charOffset: totalCharOffset + chapterCharOffset,
+        ));
+        chapterCharOffset += paragraphs[j].length + 1;
+      }
+      totalCharOffset += chapter.content.length;
+    }
+    _flatItems = items;
+  }
+
+  void _restorePosition([int? offset]) {
+    if (_flatItems.isEmpty || !_itemScrollController.isAttached) return;
+
+    final targetOffset =
+        offset ?? context.read<ReaderBloc>().state.position.charOffset;
+
+    int targetIndex = 0;
+    for (int i = 0; i < _flatItems.length; i++) {
+      if (_flatItems[i].charOffset <= targetOffset) {
+        targetIndex = i;
+      } else {
+        break;
+      }
+    }
+
+    _itemScrollController.jumpTo(index: targetIndex);
+    _lastReportedOffset = _flatItems[targetIndex].charOffset;
+  }
+
+  void _onPositionsChanged() {
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty) return;
+
+    final minIndex = positions
+        .where((p) => p.itemTrailingEdge > 0)
+        .reduce((min, p) => p.itemLeadingEdge < min.itemLeadingEdge ? p : min)
+        .index;
+
+    if (minIndex >= 0 && minIndex < _flatItems.length) {
+      final item = _flatItems[minIndex];
+
+      if (item.charOffset == _lastReportedOffset) return;
+
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
+        _lastReportedOffset = item.charOffset;
+        context.read<ReaderBloc>().add(ReaderScrolled(item.charOffset));
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_flatItems.isEmpty) {
+      return const Center(child: Text('Нет содержимого'));
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final textColor = applyContrast(
+      colorScheme.onSurface,
+      widget.contrast,
+      colorScheme.brightness,
+    );
+
+    return BlocListener<ReaderBloc, ReaderState>(
+      listenWhen: (prev, curr) =>
+          prev.position.charOffset != curr.position.charOffset,
+      listener: (context, state) {
+        if (state.position.charOffset != _lastReportedOffset) {
+          _restorePosition(state.position.charOffset);
+        }
+      },
+      child: ScrollablePositionedList.builder(
+        itemCount: _flatItems.length,
+        itemScrollController: _itemScrollController,
+        itemPositionsListener: _itemPositionsListener,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+        itemBuilder: (context, index) {
+          final item = _flatItems[index];
+
+          if (item.isHeader) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16, top: 24),
+              child: Text(
+                item.text,
+                style: TextStyle(
+                  fontSize: widget.fontSize * 1.3,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              item.text,
+              style: TextStyle(
+                fontSize: widget.fontSize,
+                color: textColor,
+                height: 1.5,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

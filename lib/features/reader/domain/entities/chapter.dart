@@ -18,6 +18,18 @@ class ChapterEntity extends Equatable {
     required this.content,
   });
 
+  ChapterEntity copyWith({
+    int? index,
+    String? title,
+    String? content,
+  }) {
+    return ChapterEntity(
+      index: index ?? this.index,
+      title: title ?? this.title,
+      content: content ?? this.content,
+    );
+  }
+
   @override
-  List<Object?> get props => [index, title];
+  List<Object?> get props => [index, title, content];
 }

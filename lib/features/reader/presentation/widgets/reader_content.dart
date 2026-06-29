@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'vertical_reader_content.dart';
+import 'horizontal_reader_content.dart';
 
 class ReaderContent extends StatelessWidget {
   final double fontSize;
@@ -17,19 +18,19 @@ class ReaderContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //if (scrollDirection == Axis.vertical) {
+    if (scrollDirection == Axis.vertical) {
       return VerticalReaderContent(
         fontSize: fontSize,
         brightness: brightness,
         contrast: contrast,
       );
-    //}
+    }
 
-    // return HorizontalReaderContent(
-    //   fontSize: fontSize,
-    //   brightness: brightness,
-    //   contrast: contrast,
-    // );
+    return HorizontalReaderContent(
+      fontSize: fontSize,
+      brightness: brightness,
+      contrast: contrast,
+    );
   }
 }
 

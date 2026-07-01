@@ -44,6 +44,8 @@ import '../../features/reader/domain/usecases/delete_bookmark.dart' as _i393;
 import '../../features/reader/domain/usecases/get_saved_position.dart' as _i47;
 import '../../features/reader/domain/usecases/open_book.dart' as _i1070;
 import '../../features/reader/domain/usecases/save_position.dart' as _i810;
+import '../../features/reader/domain/usecases/update_total_characters.dart'
+    as _i853;
 import '../../features/reader/domain/usecases/watch_bookmarks.dart' as _i512;
 import '../../features/reader/presentation/bloc/reader_bloc.dart' as _i523;
 import '../../features/settings/data/repositories/settings_repository_impl.dart'
@@ -154,6 +156,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i810.SavePositionUseCase>(
       () => _i810.SavePositionUseCase(gh<_i820.ReaderRepository>()),
     );
+    gh.factory<_i853.UpdateTotalCharactersUseCase>(
+      () => _i853.UpdateTotalCharactersUseCase(gh<_i820.ReaderRepository>()),
+    );
     gh.factory<_i512.WatchBookmarksUseCase>(
       () => _i512.WatchBookmarksUseCase(gh<_i820.ReaderRepository>()),
     );
@@ -182,6 +187,7 @@ extension GetItInjectableX on _i174.GetIt {
         openBook: gh<_i1070.OpenBookUseCase>(),
         getSavedPosition: gh<_i47.GetSavedPositionUseCase>(),
         savePosition: gh<_i810.SavePositionUseCase>(),
+        updateTotalCharacters: gh<_i853.UpdateTotalCharactersUseCase>(),
         watchBookmarks: gh<_i512.WatchBookmarksUseCase>(),
         addBookmark: gh<_i1007.AddBookmarkUseCase>(),
         deleteBookmark: gh<_i393.DeleteBookmarkUseCase>(),

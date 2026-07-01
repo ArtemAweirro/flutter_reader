@@ -116,9 +116,11 @@ class BookCard extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                 ),
                 const Gap(8),
-                if (book.totalPages != null)
+                if (book.totalCharacters != null && book.totalCharacters! > 0)
                   Chip(
-                    label: Text('${book.totalPages} страниц'),
+                    label: Text(
+                      '${((int.tryParse(book.readingPosition ?? '0') ?? 0) / book.totalCharacters! * 100).toStringAsFixed(1)}%',
+                    ),
                     visualDensity: VisualDensity.compact,
                   ),
               ],

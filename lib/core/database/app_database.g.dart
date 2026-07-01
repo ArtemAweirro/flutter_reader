@@ -101,12 +101,12 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _totalPagesMeta = const VerificationMeta(
-    'totalPages',
+  static const VerificationMeta _totalCharactersMeta = const VerificationMeta(
+    'totalCharacters',
   );
   @override
-  late final GeneratedColumn<int> totalPages = GeneratedColumn<int>(
-    'total_pages',
+  late final GeneratedColumn<int> totalCharacters = GeneratedColumn<int>(
+    'total_characters',
     aliasedName,
     true,
     type: DriftSqlType.int,
@@ -146,7 +146,7 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     isFavorite,
     isRead,
     readingPosition,
-    totalPages,
+    totalCharacters,
     sortOrder,
     addedAt,
   ];
@@ -216,10 +216,13 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         ),
       );
     }
-    if (data.containsKey('total_pages')) {
+    if (data.containsKey('total_characters')) {
       context.handle(
-        _totalPagesMeta,
-        totalPages.isAcceptableOrUnknown(data['total_pages']!, _totalPagesMeta),
+        _totalCharactersMeta,
+        totalCharacters.isAcceptableOrUnknown(
+          data['total_characters']!,
+          _totalCharactersMeta,
+        ),
       );
     }
     if (data.containsKey('sort_order')) {
@@ -275,9 +278,9 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         DriftSqlType.string,
         data['${effectivePrefix}reading_position'],
       ),
-      totalPages: attachedDatabase.typeMapping.read(
+      totalCharacters: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
-        data['${effectivePrefix}total_pages'],
+        data['${effectivePrefix}total_characters'],
       ),
       sortOrder: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -312,8 +315,8 @@ class Book extends DataClass implements Insertable<Book> {
   /// Текущая позиция (номер страницы или CFI для epub)
   final String? readingPosition;
 
-  /// Общее количество страниц (может быть null до первого открытия)
-  final int? totalPages;
+  /// Общее количество символов (или страниц для PDF)
+  final int? totalCharacters;
 
   /// Порядок в списке (для drag-and-drop)
   final int sortOrder;
@@ -327,7 +330,7 @@ class Book extends DataClass implements Insertable<Book> {
     required this.isFavorite,
     required this.isRead,
     this.readingPosition,
-    this.totalPages,
+    this.totalCharacters,
     required this.sortOrder,
     required this.addedAt,
   });
@@ -346,8 +349,8 @@ class Book extends DataClass implements Insertable<Book> {
     if (!nullToAbsent || readingPosition != null) {
       map['reading_position'] = Variable<String>(readingPosition);
     }
-    if (!nullToAbsent || totalPages != null) {
-      map['total_pages'] = Variable<int>(totalPages);
+    if (!nullToAbsent || totalCharacters != null) {
+      map['total_characters'] = Variable<int>(totalCharacters);
     }
     map['sort_order'] = Variable<int>(sortOrder);
     map['added_at'] = Variable<DateTime>(addedAt);
@@ -368,9 +371,9 @@ class Book extends DataClass implements Insertable<Book> {
       readingPosition: readingPosition == null && nullToAbsent
           ? const Value.absent()
           : Value(readingPosition),
-      totalPages: totalPages == null && nullToAbsent
+      totalCharacters: totalCharacters == null && nullToAbsent
           ? const Value.absent()
-          : Value(totalPages),
+          : Value(totalCharacters),
       sortOrder: Value(sortOrder),
       addedAt: Value(addedAt),
     );
@@ -390,7 +393,7 @@ class Book extends DataClass implements Insertable<Book> {
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
       isRead: serializer.fromJson<bool>(json['isRead']),
       readingPosition: serializer.fromJson<String?>(json['readingPosition']),
-      totalPages: serializer.fromJson<int?>(json['totalPages']),
+      totalCharacters: serializer.fromJson<int?>(json['totalCharacters']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       addedAt: serializer.fromJson<DateTime>(json['addedAt']),
     );
@@ -407,7 +410,7 @@ class Book extends DataClass implements Insertable<Book> {
       'isFavorite': serializer.toJson<bool>(isFavorite),
       'isRead': serializer.toJson<bool>(isRead),
       'readingPosition': serializer.toJson<String?>(readingPosition),
-      'totalPages': serializer.toJson<int?>(totalPages),
+      'totalCharacters': serializer.toJson<int?>(totalCharacters),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'addedAt': serializer.toJson<DateTime>(addedAt),
     };
@@ -422,7 +425,7 @@ class Book extends DataClass implements Insertable<Book> {
     bool? isFavorite,
     bool? isRead,
     Value<String?> readingPosition = const Value.absent(),
-    Value<int?> totalPages = const Value.absent(),
+    Value<int?> totalCharacters = const Value.absent(),
     int? sortOrder,
     DateTime? addedAt,
   }) => Book(
@@ -436,7 +439,9 @@ class Book extends DataClass implements Insertable<Book> {
     readingPosition: readingPosition.present
         ? readingPosition.value
         : this.readingPosition,
-    totalPages: totalPages.present ? totalPages.value : this.totalPages,
+    totalCharacters: totalCharacters.present
+        ? totalCharacters.value
+        : this.totalCharacters,
     sortOrder: sortOrder ?? this.sortOrder,
     addedAt: addedAt ?? this.addedAt,
   );
@@ -454,9 +459,9 @@ class Book extends DataClass implements Insertable<Book> {
       readingPosition: data.readingPosition.present
           ? data.readingPosition.value
           : this.readingPosition,
-      totalPages: data.totalPages.present
-          ? data.totalPages.value
-          : this.totalPages,
+      totalCharacters: data.totalCharacters.present
+          ? data.totalCharacters.value
+          : this.totalCharacters,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
     );
@@ -473,7 +478,7 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('isFavorite: $isFavorite, ')
           ..write('isRead: $isRead, ')
           ..write('readingPosition: $readingPosition, ')
-          ..write('totalPages: $totalPages, ')
+          ..write('totalCharacters: $totalCharacters, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('addedAt: $addedAt')
           ..write(')'))
@@ -490,7 +495,7 @@ class Book extends DataClass implements Insertable<Book> {
     isFavorite,
     isRead,
     readingPosition,
-    totalPages,
+    totalCharacters,
     sortOrder,
     addedAt,
   );
@@ -506,7 +511,7 @@ class Book extends DataClass implements Insertable<Book> {
           other.isFavorite == this.isFavorite &&
           other.isRead == this.isRead &&
           other.readingPosition == this.readingPosition &&
-          other.totalPages == this.totalPages &&
+          other.totalCharacters == this.totalCharacters &&
           other.sortOrder == this.sortOrder &&
           other.addedAt == this.addedAt);
 }
@@ -520,7 +525,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<bool> isFavorite;
   final Value<bool> isRead;
   final Value<String?> readingPosition;
-  final Value<int?> totalPages;
+  final Value<int?> totalCharacters;
   final Value<int> sortOrder;
   final Value<DateTime> addedAt;
   const BooksCompanion({
@@ -532,7 +537,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.isFavorite = const Value.absent(),
     this.isRead = const Value.absent(),
     this.readingPosition = const Value.absent(),
-    this.totalPages = const Value.absent(),
+    this.totalCharacters = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.addedAt = const Value.absent(),
   });
@@ -545,7 +550,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.isFavorite = const Value.absent(),
     this.isRead = const Value.absent(),
     this.readingPosition = const Value.absent(),
-    this.totalPages = const Value.absent(),
+    this.totalCharacters = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.addedAt = const Value.absent(),
   }) : title = Value(title),
@@ -560,7 +565,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<bool>? isFavorite,
     Expression<bool>? isRead,
     Expression<String>? readingPosition,
-    Expression<int>? totalPages,
+    Expression<int>? totalCharacters,
     Expression<int>? sortOrder,
     Expression<DateTime>? addedAt,
   }) {
@@ -573,7 +578,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (isFavorite != null) 'is_favorite': isFavorite,
       if (isRead != null) 'is_read': isRead,
       if (readingPosition != null) 'reading_position': readingPosition,
-      if (totalPages != null) 'total_pages': totalPages,
+      if (totalCharacters != null) 'total_characters': totalCharacters,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (addedAt != null) 'added_at': addedAt,
     });
@@ -588,7 +593,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<bool>? isFavorite,
     Value<bool>? isRead,
     Value<String?>? readingPosition,
-    Value<int?>? totalPages,
+    Value<int?>? totalCharacters,
     Value<int>? sortOrder,
     Value<DateTime>? addedAt,
   }) {
@@ -601,7 +606,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
       isFavorite: isFavorite ?? this.isFavorite,
       isRead: isRead ?? this.isRead,
       readingPosition: readingPosition ?? this.readingPosition,
-      totalPages: totalPages ?? this.totalPages,
+      totalCharacters: totalCharacters ?? this.totalCharacters,
       sortOrder: sortOrder ?? this.sortOrder,
       addedAt: addedAt ?? this.addedAt,
     );
@@ -634,8 +639,8 @@ class BooksCompanion extends UpdateCompanion<Book> {
     if (readingPosition.present) {
       map['reading_position'] = Variable<String>(readingPosition.value);
     }
-    if (totalPages.present) {
-      map['total_pages'] = Variable<int>(totalPages.value);
+    if (totalCharacters.present) {
+      map['total_characters'] = Variable<int>(totalCharacters.value);
     }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
@@ -657,7 +662,7 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('isFavorite: $isFavorite, ')
           ..write('isRead: $isRead, ')
           ..write('readingPosition: $readingPosition, ')
-          ..write('totalPages: $totalPages, ')
+          ..write('totalCharacters: $totalCharacters, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('addedAt: $addedAt')
           ..write(')'))
@@ -1450,7 +1455,7 @@ typedef $$BooksTableCreateCompanionBuilder =
       Value<bool> isFavorite,
       Value<bool> isRead,
       Value<String?> readingPosition,
-      Value<int?> totalPages,
+      Value<int?> totalCharacters,
       Value<int> sortOrder,
       Value<DateTime> addedAt,
     });
@@ -1464,7 +1469,7 @@ typedef $$BooksTableUpdateCompanionBuilder =
       Value<bool> isFavorite,
       Value<bool> isRead,
       Value<String?> readingPosition,
-      Value<int?> totalPages,
+      Value<int?> totalCharacters,
       Value<int> sortOrder,
       Value<DateTime> addedAt,
     });
@@ -1559,8 +1564,8 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get totalPages => $composableBuilder(
-    column: $table.totalPages,
+  ColumnFilters<int> get totalCharacters => $composableBuilder(
+    column: $table.totalCharacters,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1674,8 +1679,8 @@ class $$BooksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get totalPages => $composableBuilder(
-    column: $table.totalPages,
+  ColumnOrderings<int> get totalCharacters => $composableBuilder(
+    column: $table.totalCharacters,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1727,8 +1732,8 @@ class $$BooksTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get totalPages => $composableBuilder(
-    column: $table.totalPages,
+  GeneratedColumn<int> get totalCharacters => $composableBuilder(
+    column: $table.totalCharacters,
     builder: (column) => column,
   );
 
@@ -1825,7 +1830,7 @@ class $$BooksTableTableManager
                 Value<bool> isFavorite = const Value.absent(),
                 Value<bool> isRead = const Value.absent(),
                 Value<String?> readingPosition = const Value.absent(),
-                Value<int?> totalPages = const Value.absent(),
+                Value<int?> totalCharacters = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> addedAt = const Value.absent(),
               }) => BooksCompanion(
@@ -1837,7 +1842,7 @@ class $$BooksTableTableManager
                 isFavorite: isFavorite,
                 isRead: isRead,
                 readingPosition: readingPosition,
-                totalPages: totalPages,
+                totalCharacters: totalCharacters,
                 sortOrder: sortOrder,
                 addedAt: addedAt,
               ),
@@ -1851,7 +1856,7 @@ class $$BooksTableTableManager
                 Value<bool> isFavorite = const Value.absent(),
                 Value<bool> isRead = const Value.absent(),
                 Value<String?> readingPosition = const Value.absent(),
-                Value<int?> totalPages = const Value.absent(),
+                Value<int?> totalCharacters = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> addedAt = const Value.absent(),
               }) => BooksCompanion.insert(
@@ -1863,7 +1868,7 @@ class $$BooksTableTableManager
                 isFavorite: isFavorite,
                 isRead: isRead,
                 readingPosition: readingPosition,
-                totalPages: totalPages,
+                totalCharacters: totalCharacters,
                 sortOrder: sortOrder,
                 addedAt: addedAt,
               ),

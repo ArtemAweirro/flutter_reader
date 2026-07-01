@@ -14,6 +14,9 @@ abstract interface class ReaderRepository {
   /// Сохранить текущую позицию чтения.
   Future<void> savePosition(int bookId, ReadingPosition position);
 
+  /// Обновить суммарное количество символов
+  Future<void> updateTotalCharacters(int bookId, int totalCharacters);
+
   /// Реактивный стрим закладок книги.
   Stream<List<BookmarkEntity>> watchBookmarks(int bookId);
 

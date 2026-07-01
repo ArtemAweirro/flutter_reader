@@ -13,6 +13,7 @@ import '../../domain/usecases/delete_bookmark.dart';
 import '../../domain/usecases/get_saved_position.dart';
 import '../../domain/usecases/open_book.dart';
 import '../../domain/usecases/save_position.dart';
+import '../../domain/usecases/update_total_characters.dart';
 import '../../domain/usecases/watch_bookmarks.dart';
 
 // ---------------------------------------------------------------------------
@@ -192,6 +193,11 @@ final class ReaderState extends Equatable {
     return index;
   }
 
+  double get readingPercentage {
+    if (book == null || book!.totalCharacters == 0) return 0;
+    return (position.charOffset / book!.totalCharacters * 100).clamp(0, 100);
+  }
+
   bool get hasNextChapter {
     final chapters = book?.chapters;
     return chapters != null && chapterIndex < chapters.length - 1;
@@ -240,6 +246,7 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
   final OpenBookUseCase openBook;
   final GetSavedPositionUseCase getSavedPosition;
   final SavePositionUseCase savePosition;
+  final UpdateTotalCharactersUseCase updateTotalCharacters;
   final WatchBookmarksUseCase watchBookmarks;
   final AddBookmarkUseCase addBookmark;
   final DeleteBookmarkUseCase deleteBookmark;
@@ -250,6 +257,7 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
     required this.openBook,
     required this.getSavedPosition,
     required this.savePosition,
+    required this.updateTotalCharacters,
     required this.watchBookmarks,
     required this.addBookmark,
     required this.deleteBookmark,
@@ -280,6 +288,9 @@ class ReaderBloc extends Bloc<ReaderEvent, ReaderState> {
 
       final book = results[0] as ReaderBookEntity;
       final position = results[1] as ReadingPosition;
+
+      // Обновляем общее количество символов в БД, если нужно
+      unawaited(updateTotalCharacters(event.bookId, book.totalCharacters));
 
       _bookmarksSubscription?.cancel();
       _bookmarksSubscription = watchBookmarks(

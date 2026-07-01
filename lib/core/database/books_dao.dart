@@ -50,9 +50,9 @@ class BooksDao extends DatabaseAccessor<AppDatabase> with _$BooksDaoMixin {
       (update(books)..where((b) => b.id.equals(id)))
           .write(BooksCompanion(readingPosition: Value(position)));
 
-  Future<void> updateTotalPages(int id, int total) =>
+  Future<void> updateTotalCharacters(int id, int total) =>
       (update(books)..where((b) => b.id.equals(id)))
-          .write(BooksCompanion(totalPages: Value(total)));
+          .write(BooksCompanion(totalCharacters: Value(total)));
 
   Future<void> updateSortOrder(int id, int order) =>
       (update(books)..where((b) => b.id.equals(id)))

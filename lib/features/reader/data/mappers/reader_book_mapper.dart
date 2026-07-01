@@ -79,6 +79,7 @@ class ReaderBookMapper {
       author: author,
       chapters: chapters,
       items: List.unmodifiable(items),
+      totalCharacters: totalCharOffset,
     );
   }
 }

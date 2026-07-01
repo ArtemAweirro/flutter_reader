@@ -137,8 +137,8 @@ class BookRepositoryImpl implements BookRepository {
       readingPosition: book.readingPosition != null
           ? Value(book.readingPosition!)
           : const Value.absent(),
-      totalPages: book.totalPages != null
-          ? Value(book.totalPages!)
+      totalCharacters: book.totalCharacters != null
+          ? Value(book.totalCharacters!)
           : const Value.absent(),
       sortOrder: Value(book.sortOrder),
       addedAt: Value(book.addedAt),

@@ -31,7 +31,7 @@ class AddBookFromFile {
           isFavorite: false,
           isRead: false,
           readingPosition: null,
-          totalPages: null,
+          totalCharacters: null,
           sortOrder: DateTime.now().millisecondsSinceEpoch ~/ 1000,
           addedAt: DateTime.now(),
         );

@@ -123,13 +123,6 @@ class BookCard extends StatelessWidget {
                   ),
               ],
             ),
-            if (book.readingPosition != null) ...[
-              const Gap(8),
-              Text(
-                'Позиция: ${book.readingPosition}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
           ],
         ),
       ),

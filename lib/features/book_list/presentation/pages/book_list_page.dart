@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:gap/gap.dart';
 import 'package:flutter_reader/core/di/injection.dart';
 import 'package:flutter_reader/core/router/app_router.dart';
 import 'package:flutter_reader/features/book_list/presentation/bloc/book_list_bloc.dart';
@@ -34,61 +33,58 @@ class _BookListPageState extends State<BookListPage> {
           title: const Text('Мои книги'),
           elevation: 0,
         ),
-        body: BlocBuilder<BookListBloc, BookListState>(
-          builder: (context, state) {
-            if (state.isLoading && state.books.isEmpty) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-
-            if (state.errorMessage != null && state.books.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
-                    const Gap(16),
-                    Text(
-                      'Ошибка: ${state.errorMessage}',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ],
+        body: BlocListener<BookListBloc, BookListState>(
+          listenWhen: (previous, current) =>
+              current.errorMessage != null &&
+              previous.errorMessage != current.errorMessage,
+          listener: (context, state) {
+            if (state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: Colors.grey.shade800,
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
+              _bookListBloc.add(const ErrorCleared());
             }
-
-            return Column(
-              children: [
-                const FilterBar(),
-                Expanded(
-                  child: state.books.isEmpty
-                      ? Center(
-                          child: Text(
-                            'Книги не найдены',
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(8),
-                          itemCount: state.books.length,
-                          itemBuilder: (context, index) {
-                            final book = state.books[index];
-                            return BookCard(
-                              book: book,
-                              onTap: () => context.push(AppRoutes.readerPath(book.id, book.filePath)),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            );
           },
+          child: BlocBuilder<BookListBloc, BookListState>(
+            builder: (context, state) {
+              if (state.isLoading && state.books.isEmpty) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+
+              return Column(
+                children: [
+                  const FilterBar(),
+                  Expanded(
+                    child: state.books.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Книги не найдены',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(8),
+                            itemCount: state.books.length,
+                            itemBuilder: (context, index) {
+                              final book = state.books[index];
+                              return BookCard(
+                                book: book,
+                                onTap: () => context.push(
+                                    AppRoutes.readerPath(book.id, book.filePath)),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {

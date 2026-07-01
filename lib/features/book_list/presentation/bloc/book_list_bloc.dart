@@ -124,6 +124,10 @@ final class _BookListError extends BookListEvent {
   List<Object?> get props => [message];
 }
 
+final class ErrorCleared extends BookListEvent {
+  const ErrorCleared();
+}
+
 @injectable
 class BookListBloc extends Bloc<BookListEvent, BookListState> {
   final GetBooks getBooks;
@@ -152,6 +156,7 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
     on<BookReadToggled>(_onReadToggled);
     on<_BooksStreamUpdated>(_onBooksStreamUpdated);
     on<_BookListError>(_onError);
+    on<ErrorCleared>(_onErrorCleared);
   }
 
   @override
@@ -195,6 +200,10 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
       isLoading: false,
       errorMessage: event.message,
     ));
+  }
+
+  void _onErrorCleared(ErrorCleared event, Emitter<BookListState> emit) {
+    emit(state.copyWith(errorMessage: null));
   }
 
   Future<void> _onBookAdded(BookAdded event, Emitter<BookListState> emit) async {

@@ -18,6 +18,11 @@ class ParseFailure extends Failure {
   const ParseFailure() : super('Ошибка парсинга книги');
 }
 
+/// Неподдерживаемый формат файла
+class UnsupportedFormatFailure extends Failure {
+  const UnsupportedFormatFailure() : super('Неподдерживаемый формат файла');
+}
+
 /// Пользователь отменил действие (например, закрыл файловый менеджер)
 class CancelledFailure extends Failure {
   const CancelledFailure() : super('Отменено пользователем');

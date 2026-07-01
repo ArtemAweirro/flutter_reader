@@ -43,7 +43,7 @@ class BookPickerService {
 
       final extension = file.extension?.toLowerCase();
       if (extension == null || !['epub', 'fb2', 'pdf'].contains(extension)) {
-        return Left(FileFailure());
+        return const Left(UnsupportedFormatFailure());
       }
 
       // Извлекаем метаданные в зависимости от формата

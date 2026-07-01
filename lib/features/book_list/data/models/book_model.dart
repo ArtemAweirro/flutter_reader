@@ -10,7 +10,7 @@ class BookModel extends Book {
     required super.isFavorite,
     required super.isRead,
     super.readingPosition,
-    super.totalPages,
+    super.totalCharacters,
     required super.sortOrder,
     required super.addedAt,
   });
@@ -25,7 +25,7 @@ class BookModel extends Book {
       isFavorite: driftBook.isFavorite,
       isRead: driftBook.isRead,
       readingPosition: driftBook.readingPosition,
-      totalPages: driftBook.totalPages,
+      totalCharacters: driftBook.totalCharacters,
       sortOrder: driftBook.sortOrder,
       addedAt: driftBook.addedAt,
     );

@@ -50,6 +50,17 @@ class BookCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                IconButton(
+                  icon: Icon(
+                    book.isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: book.isFavorite ? Colors.red : null,
+                  ),
+                  onPressed: () {
+                    context.read<BookListBloc>().add(
+                          BookFavoriteToggled(book.id, !book.isFavorite),
+                        );
+                  },
+                ),
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     final bloc = context.read<BookListBloc>();
@@ -57,31 +68,12 @@ class BookCard extends StatelessWidget {
                       case 'delete':
                         bloc.add(BookDeleted(book.id));
                         break;
-                      case 'favorite':
-                        bloc.add(
-                          BookFavoriteToggled(book.id, !book.isFavorite),
-                        );
-                        break;
                       case 'read':
                         bloc.add(BookReadToggled(book.id, !book.isRead));
                         break;
                     }
                   },
                   itemBuilder: (BuildContext context) => [
-                    PopupMenuItem(
-                      value: 'favorite',
-                      child: Row(
-                        children: [
-                          Icon(
-                            book.isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                          ),
-                          const Gap(12),
-                          Text(book.isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'),
-                        ],
-                      ),
-                    ),
                     PopupMenuItem(
                       value: 'read',
                       child: Row(
@@ -92,7 +84,9 @@ class BookCard extends StatelessWidget {
                                 : Icons.check_circle_outline,
                           ),
                           const Gap(12),
-                          Text(book.isRead ? 'Отметить как непрочитанное' : 'Отметить как прочитанное'),
+                          Text(book.isRead
+                              ? 'Отметить как непрочитанное'
+                              : 'Отметить как прочитанное'),
                         ],
                       ),
                     ),

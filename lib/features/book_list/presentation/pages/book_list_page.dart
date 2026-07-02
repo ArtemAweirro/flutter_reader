@@ -68,18 +68,40 @@ class _BookListPageState extends State<BookListPage> {
                               style: Theme.of(context).textTheme.bodyLarge,
                             ),
                           )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(8),
-                            itemCount: state.books.length,
-                            itemBuilder: (context, index) {
-                              final book = state.books[index];
-                              return BookCard(
-                                book: book,
-                                onTap: () => context.push(
-                                    AppRoutes.readerPath(book.id, book.filePath)),
-                              );
-                            },
-                          ),
+                        : state.filter == BookFilter.all
+                            ? ReorderableListView.builder(
+                                padding: const EdgeInsets.all(8),
+                                itemCount: state.books.length,
+                                itemBuilder: (context, index) {
+                                  final book = state.books[index];
+                                  return BookCard(
+                                    key: ValueKey(book.id),
+                                    book: book,
+                                    onTap: () => context.push(
+                                        AppRoutes.readerPath(
+                                            book.id, book.filePath)),
+                                  );
+                                },
+                                onReorder: (oldIndex, newIndex) {
+                                  context
+                                      .read<BookListBloc>()
+                                      .add(BookReordered(oldIndex, newIndex));
+                                },
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.all(8),
+                                itemCount: state.books.length,
+                                itemBuilder: (context, index) {
+                                  final book = state.books[index];
+                                  return BookCard(
+                                    key: ValueKey(book.id),
+                                    book: book,
+                                    onTap: () => context.push(
+                                        AppRoutes.readerPath(
+                                            book.id, book.filePath)),
+                                  );
+                                },
+                              ),
                   ),
                 ],
               );

@@ -124,6 +124,30 @@ class BookRepositoryImpl implements BookRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> updateSortOrder(int id, int sortOrder) async {
+    try {
+      await booksDao.updateSortOrder(id, sortOrder);
+      return const Right(null);
+    } on DatabaseFailure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(DatabaseFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateSortOrders(Map<int, int> idToOrder) async {
+    try {
+      await booksDao.updateSortOrders(idToOrder);
+      return const Right(null);
+    } on DatabaseFailure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(DatabaseFailure());
+    }
+  }
+
   /// Преобразует Book в BooksCompanion для Drift
   BooksCompanion _bookToBooksCompanion(Book book) {
     return BooksCompanion(

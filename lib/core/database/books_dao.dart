@@ -58,6 +58,15 @@ class BooksDao extends DatabaseAccessor<AppDatabase> with _$BooksDaoMixin {
       (update(books)..where((b) => b.id.equals(id)))
           .write(BooksCompanion(sortOrder: Value(order)));
 
+  Future<void> updateSortOrders(Map<int, int> idToOrder) async {
+    await transaction(() async {
+      for (final entry in idToOrder.entries) {
+        await (update(books)..where((b) => b.id.equals(entry.key)))
+            .write(BooksCompanion(sortOrder: Value(entry.value)));
+      }
+    });
+  }
+
   Future<int> deleteBook(int id) =>
       (delete(books)..where((b) => b.id.equals(id))).go();
 }

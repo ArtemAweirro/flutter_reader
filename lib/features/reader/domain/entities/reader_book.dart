@@ -17,6 +17,8 @@ class ReaderBookEntity extends Equatable {
   /// Плоский список элементов (абзацев и заголовков) для навигации
   final List<ReaderItem> items;
 
+  final int totalCharacters;
+
   int get totalChapters => chapters.length;
   int get totalItems => items.length;
 
@@ -26,6 +28,7 @@ class ReaderBookEntity extends Equatable {
     this.author,
     required this.chapters,
     this.items = const [],
+    this.totalCharacters = 0,
   });
 
   ReaderBookEntity copyWith({
@@ -34,6 +37,7 @@ class ReaderBookEntity extends Equatable {
     String? author,
     List<ChapterEntity>? chapters,
     List<ReaderItem>? items,
+    int? totalCharacters,
   }) {
     return ReaderBookEntity(
       bookId: bookId ?? this.bookId,
@@ -41,9 +45,10 @@ class ReaderBookEntity extends Equatable {
       author: author ?? this.author,
       chapters: chapters ?? this.chapters,
       items: items ?? this.items,
+      totalCharacters: totalCharacters ?? this.totalCharacters,
     );
   }
 
   @override
-  List<Object?> get props => [bookId, title, author, chapters, items];
+  List<Object?> get props => [bookId, title, author, chapters, items, totalCharacters];
 }

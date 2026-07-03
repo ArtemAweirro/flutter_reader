@@ -22,6 +22,9 @@ class ReaderLocalDataSource {
   Future<void> savePositionString(int bookId, String position) =>
       _booksDao.updateReadingPosition(bookId, position);
 
+  Future<void> updateTotalCharacters(int bookId, int totalCharacters) =>
+      _booksDao.updateTotalCharacters(bookId, totalCharacters);
+
   // --- Bookmarks ---
 
   Stream<List<Bookmark>> watchBookmarks(int bookId) =>

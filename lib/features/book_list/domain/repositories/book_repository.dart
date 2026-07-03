@@ -29,4 +29,10 @@ abstract class BookRepository {
 
   /// Переключить статус "прочитано"
   Future<Either<Failure, void>> toggleRead(int id, bool value);
+
+  /// Обновить порядок книги
+  Future<Either<Failure, void>> updateSortOrder(int id, int sortOrder);
+
+  /// Обновить порядок нескольких книг (для Drag-and-drop)
+  Future<Either<Failure, void>> updateSortOrders(Map<int, int> idToOrder);
 }

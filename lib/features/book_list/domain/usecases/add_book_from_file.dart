@@ -31,8 +31,9 @@ class AddBookFromFile {
           isFavorite: false,
           isRead: false,
           readingPosition: null,
-          totalPages: null,
-          sortOrder: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          totalCharacters: null,
+          // Отрицательный таймстемп, чтобы новые книги были вверху при ASC сортировке
+          sortOrder: -(DateTime.now().millisecondsSinceEpoch ~/ 1000),
           addedAt: DateTime.now(),
         );
 

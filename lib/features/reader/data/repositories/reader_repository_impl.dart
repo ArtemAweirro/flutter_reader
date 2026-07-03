@@ -60,6 +60,10 @@ class ReaderRepositoryImpl implements ReaderRepository {
       );
 
   @override
+  Future<void> updateTotalCharacters(int bookId, int totalCharacters) =>
+      _localDataSource.updateTotalCharacters(bookId, totalCharacters);
+
+  @override
   Stream<List<BookmarkEntity>> watchBookmarks(int bookId) =>
       _localDataSource.watchBookmarks(bookId).map(
             (list) => list.map((b) => b.toEntity()).toList(),

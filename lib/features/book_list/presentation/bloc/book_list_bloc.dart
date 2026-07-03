@@ -8,6 +8,7 @@ import 'package:flutter_reader/features/book_list/domain/usecases/add_book.dart'
 import 'package:flutter_reader/features/book_list/domain/usecases/add_book_from_file.dart';
 import 'package:flutter_reader/features/book_list/domain/usecases/delete_book.dart';
 import 'package:flutter_reader/features/book_list/domain/usecases/get_books.dart';
+import 'package:flutter_reader/features/book_list/domain/usecases/reorder_books.dart';
 import 'package:flutter_reader/features/book_list/domain/usecases/toggle_favorite.dart';
 import 'package:flutter_reader/features/book_list/domain/usecases/toggle_read.dart';
 
@@ -106,6 +107,16 @@ final class BookReadToggled extends BookListEvent {
   List<Object?> get props => [bookId, isRead];
 }
 
+final class BookReordered extends BookListEvent {
+  final int oldIndex;
+  final int newIndex;
+
+  const BookReordered(this.oldIndex, this.newIndex);
+
+  @override
+  List<Object?> get props => [oldIndex, newIndex];
+}
+
 final class _BooksStreamUpdated extends BookListEvent {
   final List<Book> books;
 
@@ -124,6 +135,10 @@ final class _BookListError extends BookListEvent {
   List<Object?> get props => [message];
 }
 
+final class ErrorCleared extends BookListEvent {
+  const ErrorCleared();
+}
+
 @injectable
 class BookListBloc extends Bloc<BookListEvent, BookListState> {
   final GetBooks getBooks;
@@ -132,6 +147,7 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
   final DeleteBook deleteBook;
   final ToggleFavorite toggleFavorite;
   final ToggleRead toggleRead;
+  final ReorderBooks reorderBooks;
 
   StreamSubscription? _booksSubscription;
 
@@ -142,6 +158,7 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
     required this.deleteBook,
     required this.toggleFavorite,
     required this.toggleRead,
+    required this.reorderBooks,
   }) : super(const BookListState()) {
     on<BookListInit>(_onInit);
     on<BookFilterChanged>(_onFilterChanged);
@@ -150,8 +167,10 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
     on<BookDeleted>(_onBookDeleted);
     on<BookFavoriteToggled>(_onFavoriteToggled);
     on<BookReadToggled>(_onReadToggled);
+    on<BookReordered>(_onReordered);
     on<_BooksStreamUpdated>(_onBooksStreamUpdated);
     on<_BookListError>(_onError);
+    on<ErrorCleared>(_onErrorCleared);
   }
 
   @override
@@ -195,6 +214,10 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
       isLoading: false,
       errorMessage: event.message,
     ));
+  }
+
+  void _onErrorCleared(ErrorCleared event, Emitter<BookListState> emit) {
+    emit(state.copyWith(errorMessage: null));
   }
 
   Future<void> _onBookAdded(BookAdded event, Emitter<BookListState> emit) async {
@@ -247,5 +270,24 @@ class BookListBloc extends Bloc<BookListEvent, BookListState> {
       (failure) => emit(state.copyWith(errorMessage: failure.message)),
       (_) {}, // Данные обновятся через stream
     );
+  }
+
+  Future<void> _onReordered(
+    BookReordered event,
+    Emitter<BookListState> emit,
+  ) async {
+    final books = List<Book>.from(state.books);
+    int newIndex = event.newIndex;
+    if (event.oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final item = books.removeAt(event.oldIndex);
+    books.insert(newIndex, item);
+
+    // Обновление UI
+    emit(state.copyWith(books: books));
+
+    // Сохранение нового порядка в БД
+    await reorderBooks(books);
   }
 }

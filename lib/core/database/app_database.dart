@@ -26,8 +26,8 @@ class Books extends Table {
   /// Текущая позиция (номер страницы или CFI для epub)
   TextColumn get readingPosition => text().nullable()();
  
-  /// Общее количество страниц (может быть null до первого открытия)
-  IntColumn get totalPages => integer().nullable()();
+  /// Общее количество символов (или страниц для PDF)
+  IntColumn get totalCharacters => integer().nullable()();
  
   /// Порядок в списке (для drag-and-drop)
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();

@@ -9,7 +9,7 @@ class Book extends Equatable {
   final bool isFavorite;
   final bool isRead;
   final String? readingPosition;
-  final int? totalPages;
+  final int? totalCharacters;
   final int sortOrder;
   final DateTime addedAt;
 
@@ -22,7 +22,7 @@ class Book extends Equatable {
     required this.isFavorite,
     required this.isRead,
     this.readingPosition,
-    this.totalPages,
+    this.totalCharacters,
     required this.sortOrder,
     required this.addedAt,
   });
@@ -36,7 +36,7 @@ class Book extends Equatable {
     bool? isFavorite,
     bool? isRead,
     String? readingPosition,
-    int? totalPages,
+    int? totalCharacters,
     int? sortOrder,
     DateTime? addedAt,
   }) {
@@ -49,7 +49,7 @@ class Book extends Equatable {
       isFavorite: isFavorite ?? this.isFavorite,
       isRead: isRead ?? this.isRead,
       readingPosition: readingPosition ?? this.readingPosition,
-      totalPages: totalPages ?? this.totalPages,
+      totalCharacters: totalCharacters ?? this.totalCharacters,
       sortOrder: sortOrder ?? this.sortOrder,
       addedAt: addedAt ?? this.addedAt,
     );
@@ -65,7 +65,7 @@ class Book extends Equatable {
     isFavorite,
     isRead,
     readingPosition,
-    totalPages,
+    totalCharacters,
     sortOrder,
     addedAt,
   ];

@@ -1,0 +1,134 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gap/gap.dart';
+import 'package:flutter_reader/features/book_list/domain/entities/book.dart';
+import 'package:flutter_reader/features/book_list/presentation/bloc/book_list_bloc.dart';
+
+class BookCard extends StatelessWidget {
+  final Book book;
+  final VoidCallback? onTap;
+
+  const BookCard({
+    super.key,
+    required this.book,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        book.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (book.author != null) ...[
+                        const Gap(4),
+                        Text(
+                          book.author!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    book.isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: book.isFavorite ? Colors.red : null,
+                  ),
+                  onPressed: () {
+                    context.read<BookListBloc>().add(
+                          BookFavoriteToggled(book.id, !book.isFavorite),
+                        );
+                  },
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    final bloc = context.read<BookListBloc>();
+                    switch (value) {
+                      case 'delete':
+                        bloc.add(BookDeleted(book.id));
+                        break;
+                      case 'read':
+                        bloc.add(BookReadToggled(book.id, !book.isRead));
+                        break;
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    PopupMenuItem(
+                      value: 'read',
+                      child: Row(
+                        children: [
+                          Icon(
+                            book.isRead
+                                ? Icons.check_circle
+                                : Icons.check_circle_outline,
+                          ),
+                          const Gap(12),
+                          Text(book.isRead
+                              ? 'Отметить как непрочитанное'
+                              : 'Отметить как прочитанное'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          Gap(12),
+                          Text(
+                            'Удалить',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const Gap(12),
+            Row(
+              children: [
+                Chip(
+                  label: Text(book.format.toUpperCase()),
+                  visualDensity: VisualDensity.compact,
+                ),
+                const Gap(8),
+                if (book.totalCharacters != null && book.totalCharacters! > 0)
+                  Chip(
+                    label: Text(
+                      '${((int.tryParse(book.readingPosition ?? '0') ?? 0) / book.totalCharacters! * 100).toStringAsFixed(1)}%',
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    )
+    );
+  }
+}

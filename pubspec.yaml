@@ -1,19 +1,67 @@
 name: flutter_reader
-description: "A new Flutter project."
+description: "A cross-platform e-book reader supporting EPUB, FB2, and PDF formats"
 publish_to: 'none'
 version: 0.1.0+1
 
 environment:
   sdk: ^3.12.2
+  flutter: '>=3.10.0'
 
 dependencies:
   flutter:
     sdk: flutter
+
+  # State management
+  flutter_bloc: ^9.1.1 # Flutter интеграция для BLoC
+  bloc: ^9.2.1 # Менеждер состояний для Flutter
+  equatable: ^2.0.8 # Сравнение состояний BLoC
+  dartz: ^0.10.1 # Функциональные типы для обработки ошибок и результатов
+
+  # DI
+  get_it: ^9.2.1
+  injectable: ^3.0.0 # Кодогенерация для get_it (@injectable, @singleton)
+
+  # Navigation
+  go_router: ^17.3.0
+
+  # Database
+  drift: ^2.34.0 # ORM для SQLite в Dart
+  sqlite3_flutter_libs: ^0.6.0+eol # Нативные библиотеки SQLite для Flutter
+  path_provider: ^2.1.6 # Получение путей к директориям на устройстве
+  path: ^1.9.0 # Работа с путями файловой системы
+
+  # Preferences
+  shared_preferences: ^2.5.5 # Сохранение простых данных в виде ключ-значение
+
+  # File picker
+  file_picker: ^10.3.10 # Выбор файлов на устройстве
+
+  # Book Formats
+  epubx: ^4.0.0 # Чтение EPUB файлов
+  xml: ^6.0.1 # Чтение и парсинг XML (для FB2)
+  syncfusion_flutter_pdf: ^33.2.13 # Работа с PDF файлами
+
+  # UI
+  screen_brightness: ^2.1.11 # Управление яркостью экрана
+
+  # Utils
+  json_annotation: ^4.12.0 # Аннотации для генерации JSON сериализации
+  rxdart: ^0.28.0 # Реактивные расширения для Dart
+  gap: ^3.0.1 # Простые отступы между виджетами
+  scrollable_positioned_list: ^0.3.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+  # Code generation
+  build_runner: ^2.15.0 # Генерация кода для freezed и json_serializable
+  injectable_generator: ^3.1.0 # Генерация кода для get_it
+  drift_dev: ^2.34.1 # Генерация кода для drift
+  json_serializable: ^6.14.0 # Генерация JSON сериализации
+
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/

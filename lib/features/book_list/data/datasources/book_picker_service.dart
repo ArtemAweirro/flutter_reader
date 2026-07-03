@@ -1,0 +1,219 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_reader/core/error/failures.dart';
+import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
+import 'package:epubx/epubx.dart' as epubx;
+import 'package:xml/xml.dart' as xml;
+import 'dart:io';
+
+abstract class BookMetadata {
+  final String filePath;
+  final String format;
+  final String title;
+  final String? author;
+
+  BookMetadata({
+    required this.filePath,
+    required this.format,
+    required this.title,
+    this.author,
+  });
+}
+
+@injectable
+class BookPickerService {
+  Future<Either<Failure, BookMetadata?>> pickAndParseBook() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['epub', 'fb2', 'pdf'],
+        withData: false,
+      );
+
+      if (result == null) {
+        return const Left(CancelledFailure());
+      }
+
+      final file = result.files.single;
+      final filePath = file.path;
+
+      if (filePath == null) {
+        return Left(FileFailure());
+      }
+
+      final extension = file.extension?.toLowerCase();
+      if (extension == null || !['epub', 'fb2', 'pdf'].contains(extension)) {
+        return const Left(UnsupportedFormatFailure());
+      }
+
+      // Извлекаем метаданные в зависимости от формата
+      final metadata = await _parseMetadata(filePath, extension);
+
+      return Right(metadata);
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  /// Парсит метаданные из файла на основе его формата
+  Future<BookMetadata> _parseMetadata(
+    String filePath,
+    String format,
+  ) async {
+    try {
+      switch (format) {
+        case 'epub':
+          return _parseEpubMetadata(filePath);
+        case 'fb2':
+          return _parseFb2Metadata(filePath);
+        case 'pdf':
+          return _parsePdfMetadata(filePath);
+        default:
+          return _defaultMetadata(filePath, format);
+      }
+    } catch (e) {
+      return _defaultMetadata(filePath, format);
+    }
+  }
+
+  /// EPUB парсинг (простой вариант)
+  Future<BookMetadata> _parseEpubMetadata(String filePath) async {
+    final book = await epubx.EpubReader.readBook(
+      await _readFileAsBytes(filePath),
+    );
+
+    final title = book.Title?.isEmpty ?? true ? null : book.Title;
+    final author = book.Author?.isEmpty ?? true ? null : book.Author;
+
+    return _SimpleBookMetadata(
+      filePath: filePath,
+      format: 'epub',
+      title: title ?? _extractTitleFromPath(filePath),
+      author: author
+    );
+  }
+
+  /// FB2 парсинг
+  Future<BookMetadata> _parseFb2Metadata(String filePath) async {
+    final content = await File(filePath).readAsString();
+    final document = xml.XmlDocument.parse(content);
+
+    String? title;
+    String? author;
+
+    final titleInfo = document.descendants
+        .whereType<xml.XmlElement>()
+        .where((e) => e.localName == 'title-info')
+        .firstOrNull;
+
+    if (titleInfo != null) {
+      title = titleInfo.descendants
+          .whereType<xml.XmlElement>()
+          .where((e) => e.localName == 'book-title')
+          .firstOrNull
+          ?.innerText;
+
+      final authorElement = titleInfo.descendants
+          .whereType<xml.XmlElement>()
+          .where((e) => e.localName == 'author')
+          .firstOrNull;
+
+      if (authorElement != null) {
+        final firstName = authorElement.descendants
+            .whereType<xml.XmlElement>()
+            .where((e) => e.localName == 'first-name')
+            .firstOrNull
+            ?.innerText;
+
+        final lastName = authorElement.descendants
+            .whereType<xml.XmlElement>()
+            .where((e) => e.localName == 'last-name')
+            .firstOrNull
+            ?.innerText;
+
+        if (firstName != null || lastName != null) {
+          author = [firstName, lastName].whereType<String>().join(' ').trim();
+        }
+      }
+    }
+
+    return _SimpleBookMetadata(
+      filePath: filePath,
+      format: 'fb2',
+      title: (title?.isNotEmpty ?? false) ? title! : _extractTitleFromPath(filePath),
+      author: (author?.isNotEmpty ?? false) ? author : null,
+    );
+  }
+
+  /// PDF парсинг
+  Future<BookMetadata> _parsePdfMetadata(String filePath) async {
+    try {
+      final fileContent = await File(filePath).readAsBytes();
+      final pdfText = String.fromCharCodes(fileContent);
+
+      String? title;
+      String? author;
+
+      // Ищем /Title в документе
+      final titleMatch = RegExp(r'/Title\s*\(\s*([^)]+)\s*\)').firstMatch(pdfText);
+      if (titleMatch != null) {
+        title = _cleanPdfString(titleMatch.group(1) ?? '');
+      }
+
+      // Ищем /Author в документе
+      final authorMatch = RegExp(r'/Author\s*\(\s*([^)]+)\s*\)').firstMatch(pdfText);
+      if (authorMatch != null) {
+        author = _cleanPdfString(authorMatch.group(1) ?? '');
+      }
+
+      return _SimpleBookMetadata(
+        filePath: filePath,
+        format: 'pdf',
+        title: (title?.isNotEmpty ?? false) ? title! : _extractTitleFromPath(filePath),
+        author: (author?.isNotEmpty ?? false) ? author : null,
+      );
+    } catch (e) {
+      return _defaultMetadata(filePath, 'pdf');
+    }
+  }
+
+  /// Очищает строки из PDF от экранирования и управляющих символов
+  String _cleanPdfString(String value) {
+    return value
+        .replaceAll(RegExp(r'\\[()\\]'), '')
+        .replaceAll(RegExp(r'[\x00-\x1f]'), '')
+        .trim();
+  }
+
+  /// Возвращает метаданные по умолчанию (только имя файла)
+  BookMetadata _defaultMetadata(String filePath, String format) {
+    // Извлекаем имя файла без расширения
+    final fileName = filePath.split('/').last;
+    final title = fileName.replaceAll(RegExp(r'\.(epub|fb2|pdf)$'), '');
+
+    return _SimpleBookMetadata(
+      filePath: filePath,
+      format: format,
+      title: title.isEmpty ? 'Unknown' : title,
+      author: null,
+    );
+  }
+
+  Future<List<int>> _readFileAsBytes(String filePath) async {
+    return await File(filePath).readAsBytes();
+  }
+
+  String _extractTitleFromPath(String filePath) {
+    final fileName = filePath.split('/').last;
+    return fileName.replaceAll(RegExp(r'\.(epub|fb2|pdf)$'), '');
+  }
+}
+
+class _SimpleBookMetadata extends BookMetadata {
+  _SimpleBookMetadata({
+    required super.filePath,
+    required super.format,
+    required super.title,
+    super.author,
+  });
+}

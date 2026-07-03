@@ -155,20 +155,11 @@ class _ReaderViewState extends State<_ReaderView> with WidgetsBindingObserver {
                       ),
                     ),
                   if (_barsVisible)
-                    BlocBuilder<SettingsBloc, SettingsState>(
-                      buildWhen: (prev, curr) =>
-                          prev.scrollDirection != curr.scrollDirection,
-                      builder: (context, settings) {
-                        if (settings.scrollDirection == Axis.vertical) {
-                          return const SizedBox.shrink();
-                        }
-                        return const Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: ReaderBottomBar(),
-                        );
-                      },
+                    const Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: ReaderBottomBar(),
                     ),
                 ],
               ),
